@@ -25,6 +25,7 @@ class Verifier
 public:
     int step1(Intero Pu) //take result of Proover step1
     {
+        srand((int)time(NULL));
         u=Pu;
         e=rand() % 2;
         return e;
@@ -76,6 +77,7 @@ class Proover
 public:
     Intero step1() //start protocol
     {
+        Randinit
         r= RandNum % Privkey.Mod;
         return (r*r) % Privkey.Mod;
     }
@@ -86,7 +88,7 @@ public:
             return r;
         else if (e==1)
             return (r*Privkey.K) % Privkey.Mod;
-        else return 0; // forzato
+        else return 0; 
     }
     
     void reset() //reset for next iteration
@@ -100,6 +102,8 @@ void FS_key_create(Key &Pubkey, Key &Privkey)
 {
     Intero PrimeP=Primegen;
     Intero PrimeQ=Primegen;
+    
+    Randinit
     
     Privkey.Mod = PrimeP * PrimeQ;
     Pubkey.Mod = Privkey.Mod;

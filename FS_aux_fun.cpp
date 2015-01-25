@@ -35,12 +35,12 @@ Intero modexp( Intero base, Intero esp, Intero mod)
     else if (esp%2==0)
     {
         Intero temp = modexp(base, esp/2, mod);
-        return temp * temp % mod;
+        return (temp * temp) % mod;
     }
     else
     {
         Intero temp = modexp(base, esp/2, mod);
-        return temp * temp * base % mod;
+        return (temp * temp * base) % mod;
     }
 }
 
@@ -118,6 +118,7 @@ void MRscomposition(Intero N, Intero &w, Intero &z)
 //extract a random number and search a early prime
 Intero Primegenerator()
 {
+    Randinit
     Intero P = RandNum;
     if (P%2==0)
         P++;

@@ -19,5 +19,7 @@
 #define Intero long long//ttmath::Int<32> //set int size of block: 32 for 1024 bit, 64 for 2048
 #define RandNum rand() //random number generator
 #define Primegen Primegenerator() //prime number generator
-#define Precision 20 //precision of Miller-Rabin test
+#define Precision 15 //precision of Miller-Rabin test
+#define Randinit srand((int) time(NULL));
+
 #endif

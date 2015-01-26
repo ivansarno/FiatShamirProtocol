@@ -9,29 +9,23 @@
 #include "FS_class.h"
 
 
-class Verifier
-{
-    int e;
-    Key Pubkey;
-    Intero u;
-    bool state;
+
     
-    Verifier(Key initkey) //take Pubkey
+Verifier::Verifier(Key initkey) //take Pubkey
     {
         Pubkey.Mod = initkey.Mod;
         Pubkey.K = initkey.K;
     }
     
-public:
-    int step1(Intero Pu) //take result of Proover step1
+int Verifier::step1(Intero Pu) //take result of Proover step1
     {
-        srand((int)time(NULL));
+        //srand((int)time(NULL));
         u=Pu;
         e=rand() % 2;
         return e;
     }
     
-    void step2(Intero z) //take retult of Proover step2 and change the state
+void Verifier::step2(Intero z) //take retult of Proover step2 and change the state
     {
         z= (z*z) % Pubkey.Mod;
         
@@ -46,12 +40,12 @@ public:
         else state = false;
     }
     
-    bool checkstate() //return state of identification
+bool Verifier::checkstate() //return state of identification
     {
         return state;
     }
     
-    void reset() //reset for next iteration
+void Verifier::reset() //reset for next iteration
     {
         e=0;
         u=0;
@@ -59,30 +53,27 @@ public:
     }
     
     
-};
 
 
 
-class Proover
-{
-    Key Privkey;
-    Intero r;
+
     
-    Proover(Key initkey) //take Privkey
+Proover::Proover(Key initkey) //take Privkey
     {
         Privkey.Mod = initkey.Mod;
         Privkey.K = initkey.K;
     }
     
-public:
-    Intero step1() //start protocol
+
+Intero Proover::step1() //start protocol
     {
-        Randinit
-        r= RandNum % Privkey.Mod;
+        //Randinit
+        r= RandNum;
+        r %= Privkey.Mod;
         return (r*r) % Privkey.Mod;
     }
     
-    Intero step2(int e) //take result of Verifier step1
+Intero Proover::step2(int e) //take result of Verifier step1
     {
         if (e==0)
             return r;
@@ -91,14 +82,14 @@ public:
         else return 0; 
     }
     
-    void reset() //reset for next iteration
+void Proover::reset() //reset for next iteration
     {
        r=0;
     }
-};
 
 
-void FS_key_create(Key &Pubkey, Key &Privkey)
+
+void FS_key_create(Key &Pubkey, Key &Privkey) //take uninitialized K variable and generates Public and Private key
 {
     Intero PrimeP=Primegen;
     Intero PrimeQ=Primegen;
@@ -108,6 +99,7 @@ void FS_key_create(Key &Pubkey, Key &Privkey)
     Privkey.Mod = PrimeP * PrimeQ;
     Pubkey.Mod = Privkey.Mod;
     
-    Privkey.K = RandNum % Privkey.Mod;
+    Privkey.K = RandNum;
+    Privkey.K %= Privkey.Mod;
     Pubkey.K = Privkey.K * Privkey.K % Privkey.Mod;
 }

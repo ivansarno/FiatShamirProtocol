@@ -100,8 +100,7 @@ void MRscomposition(Intero N, Intero &w, Intero &z)
     Intero i=1;
     Intero acc=2;
     N--;
-    Intero r;
-    
+    Intero r;    
     while (acc < N)
     {
         r=N/acc;

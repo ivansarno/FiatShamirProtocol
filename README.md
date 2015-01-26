@@ -1,8 +1,9 @@
 # Fiat-Shamir_ZK-Protocol
 OOP Fiat-Shamir Zero Knowledge Protocol implementation
 
-Preview verision
+Beta version
 
+Main file is for test
 
 Library includes:
 
@@ -12,14 +13,17 @@ Library includes:
 
 -Proover class
 
-declared with private key, have reset, step1 and step2 method
-
 -Verifier class
 
-declared with public key, have reset step1,step2 and check state method
-
-
 detail in FS_class.cpp file
+
+Random Number Generator
+
+Library not includes a Random Number Generator, user can replace it with one of your own in Define.h file (compatible with integer library)
+
+Credit
+
+Arbitrary Precision Library from TTMath (not included in the source) Link: http://www.ttmath.org
 
 
 :)

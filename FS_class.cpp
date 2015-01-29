@@ -12,89 +12,92 @@
 
     
 Verifier::Verifier(Key initkey) //take Pubkey
-    {
-        Pubkey.Mod = initkey.Mod;
-        Pubkey.K = initkey.K;
-    }
+{
+    Pubkey.Mod = initkey.Mod;
+    Pubkey.K = initkey.K;
+    Randbitinit
+}
     
 int Verifier::step1(Intero Pu) //take result of Proover step1
-    {
-        //srand((int)time(NULL));
-        u=Pu;
-        e=rand() % 2;
-        return e;
-    }
+{
+    u=Pu;
+    e=Randbit
+    return e;
+}
     
 void Verifier::step2(Intero z) //take retult of Proover step2 and change the state
-    {
-        z= (z*z) % Pubkey.Mod;
+{
+    z= (z*z) % Pubkey.Mod;
         
-        Intero y;
+    Intero y;
         
-        if (e==1)
-            y = (u * Pubkey.K) % Pubkey.Mod;
-        else y= u;
+    if (e==1)
+        y = (u * Pubkey.K) % Pubkey.Mod;
+    else y= u;
         
-        if (z==y)
-            state = true;
-        else state = false;
-    }
+    if (z==y)
+        state = true;
+    else state = false;
+}
     
 bool Verifier::checkstate() //return state of identification
-    {
-        return state;
-    }
+{
+    return state;
+}
     
 void Verifier::reset() //reset for next iteration
-    {
-        e=0;
-        u=0;
-        state=false;
-    }
-    
-    
-
-
-
+{
+    e=0;
+    u=0;
+    state=false;
+    Randbitinit
+}
 
     
 Proover::Proover(Key initkey) //take Privkey
-    {
-        Privkey.Mod = initkey.Mod;
-        Privkey.K = initkey.K;
-    }
+{
+    Privkey.Mod = initkey.Mod;
+    Privkey.K = initkey.K;
+    Randinit
+}
     
 
 Intero Proover::step1() //start protocol
-    {
-        //Randinit
-        r= RandNum;
-        r %= Privkey.Mod;
-        return (r*r) % Privkey.Mod;
-    }
+{
+    r= RandNum;
+    r %= Privkey.Mod;
+    return (r*r) % Privkey.Mod;
+}
     
 Intero Proover::step2(int e) //take result of Verifier step1
-    {
-        if (e==0)
-            return r;
-        else if (e==1)
-            return (r*Privkey.K) % Privkey.Mod;
-        else return 0; 
-    }
+{
+    if (e==0)
+        return r;
+    else if (e==1)
+        return (r*Privkey.K) % Privkey.Mod;
+    else return 0;
+}
     
 void Proover::reset() //reset for next iteration
-    {
-       r=0;
-    }
+{
+    r=0;
+    Randinit
+        
+}
 
 
 
 void FS_key_create(Key &Pubkey, Key &Privkey) //take uninitialized K variable and generates Public and Private key
 {
+    Randinit
     Intero PrimeP=Primegen;
     Intero PrimeQ=Primegen;
     
-    Randinit
+    while (Prime_check(PrimeQ, PrimeP)) //make sure it is appropriate for security standards
+    {
+        PrimeQ = Primegen;
+    }
+    
     
     Privkey.Mod = PrimeP * PrimeQ;
     Pubkey.Mod = Privkey.Mod;
@@ -102,4 +105,14 @@ void FS_key_create(Key &Pubkey, Key &Privkey) //take uninitialized K variable an
     Privkey.K = RandNum;
     Privkey.K %= Privkey.Mod;
     Pubkey.K = Privkey.K * Privkey.K % Privkey.Mod;
+}
+
+bool Prime_check(Intero Q, Intero P) //test for prime number security
+{
+    Intero dif = (P-Q);
+    dif.Abs();
+    P=(P-1)/2;
+    Q=(Q-1)/2;
+    
+    return coprime(P,Q) && (dif > Distance);
 }

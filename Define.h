@@ -18,9 +18,11 @@
 
 
 #define Intero ttmath::Int<32> //set int size of block: 32 for 1024 bit, 64 for 2048
-#define RandNum rand() //random number generator
 #define Primegen Primegenerator() //prime number generator
 #define Precision 15 //precision of Miller-Rabin test
-#define Randinit srand((int) time(NULL));
-
+#define Distance 65536 // distance between prime number (2^16)
+#define Randinit srand((int) time(NULL)); //initializator of random number generator
+#define RandNum rand() //random number generator
+#define Randbit rand() % 2; //random int [0,1] generator
+#define Randbitinit srand((int) time(NULL)); //initilizato of Randbit
 #endif

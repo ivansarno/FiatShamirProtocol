@@ -117,7 +117,6 @@ void MRscomposition(Intero N, Intero &w, Intero &z)
 //extract a random number and search a early prime
 Intero Primegenerator()
 {
-    Randinit
     Intero P = RandNum;
     if (P%2==0)
         P++;

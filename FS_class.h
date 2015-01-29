@@ -18,9 +18,8 @@ typedef struct
     Intero K;
 } Key;
 
-//class Verifier;
-//class Proover;
-void FS_key_create(Key &Pubkey, Key &Privkey); //take uninitialized K variable and generates Public and Private key
+
+void FS_key_create(Key &Pubkey, Key &Privkey); //take uninitialized Key variable and generates Public and Private key
 
 
 
@@ -33,7 +32,7 @@ public:
     Proover(Key initkey); //take Privkey
     Intero step1(); //start protocol
     Intero step2(int e); //take result of Verifier step1
-    void reset(); //reset for next iteration
+    void reset(); //reset the object (to another session)
 };
 
 
@@ -49,7 +48,10 @@ public:
     int step1(Intero Pu); //take result of Proover step1
     void step2(Intero z); //take retult of Proover step2 and change the state
     bool checkstate(); //return state of identification
-    void reset(); //reset for next iteration
+    void reset(); //reset reset the object (to another session)
 };
+
+//subfunctions
+bool Prime_check(Intero Q, Intero P); //test for prime number security
 
 #endif /* defined(__Fiat_Shamir__FS_class__) */

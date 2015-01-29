@@ -10,7 +10,6 @@
 #define __Fiat_Shamir__FS_class__
 
 #include "FS_aux_fun.h"
-//#include <iostream>
 
 typedef struct
 {

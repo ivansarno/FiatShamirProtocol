@@ -45,7 +45,7 @@ bool Verifier::checkstate() //return state of identification
     return state;
 }
     
-void Verifier::reset() //reset for next iteration
+void Verifier::reset() //reset for next session
 {
     e=0;
     u=0;
@@ -78,7 +78,7 @@ Intero Proover::step2(int e) //take result of Verifier step1
     else return 0;
 }
     
-void Proover::reset() //reset for next iteration
+void Proover::reset() //reset for next session
 {
     r=0;
     Randinit

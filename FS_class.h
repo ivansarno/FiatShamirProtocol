@@ -11,10 +11,11 @@
 
 #include "FS_aux_fun.h"
 
+
 typedef struct
 {
     Intero Mod;
-    Intero K;
+    Intero K; //key
 } Key;
 
 

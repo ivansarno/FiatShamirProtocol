@@ -12,7 +12,7 @@
 #include "Define.h"
 
 Intero fastexp( Intero base, Intero esp);
-Intero modexp( Intero base, Intero esp, Intero mod);
+Intero modexp( Intero base, Intero esp, Intero mod); //power in module
 bool MRpredicate1 (Intero y, Intero z, Intero N);
 bool MRpredicate2(Intero y, Intero N, Intero z, Intero w);
 bool MRtest(Intero N); //Miller-Rabin test for prime number

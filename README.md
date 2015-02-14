@@ -25,6 +25,16 @@ There are two generators:
 
 -Randinit and Randbitinit are the respective initializers 
 
+Usage:
+
+-the client create the keys withFS_key_create
+
+-the client instantiates a Proover object with the private key
+
+-the server instantiates a Verifier object with the public key of client
+
+-run a session of FS exchanging the result of methods for N iteration, with N is the precision you like
+
 Credit
 
 Arbitrary Precision Library from TTMath (not included in the source) Link: http://www.ttmath.org

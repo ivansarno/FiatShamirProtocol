@@ -5,6 +5,7 @@
 //  Created by ivan sarno on 24/01/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
+// version V.1.5
 
 #ifndef __Fiat_Shamir__FS_class__
 #define __Fiat_Shamir__FS_class__

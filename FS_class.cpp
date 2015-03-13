@@ -5,10 +5,9 @@
 //  Created by ivan sarno on 24/01/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
+// version V.1.5
 
 #include "FS_class.h"
-
-
 
     
 Verifier::Verifier(Key initkey) //take Pubkey

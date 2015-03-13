@@ -15,7 +15,7 @@ detail in FS_class.cpp file
 
 Random Number Generator
 
-Library not includes a Random Number Generator, user can replace it with one of your own in Define.h file 
+Random Number Generator included is only for testing, user can replace it with one of your own in Define.h file 
 
 There are two generators:
 

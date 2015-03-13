@@ -5,6 +5,7 @@
 //  Created by ivan sarno on 24/01/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
+// version V.1.5
 
 #ifndef __Fiat_Shamir__FS_aux_fun__
 #define __Fiat_Shamir__FS_aux_fun__
@@ -20,5 +21,7 @@ void MRscomposition(Intero N, Intero &w, Intero &z);
 Intero Primegenerator();
 Intero inverso(Intero n, Intero Modulo);
 bool coprime (Intero a,  Intero b);
+
+char *randstring(); // random number generator, only for test 
 
 #endif /* defined(__Fiat_Shamir__FS_aux_fun__) */

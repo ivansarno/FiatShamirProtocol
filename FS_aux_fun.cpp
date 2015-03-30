@@ -5,11 +5,11 @@
 //  Created by ivan sarno on 24/01/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-// version V.1.5
+// version V.2.0
 
 #include "FS_aux_fun.h"
 
-Intero fastexp(Intero base, Intero esp)
+Integer fastexp(Integer base, Integer esp)
 {
 	if (esp == 0)
 		return 1;
@@ -17,9 +17,9 @@ Intero fastexp(Intero base, Intero esp)
 		return base;
 	else
 	{
-		Intero i = 1;
+		Integer i = 1;
 		int j = 0;
-		Intero *tempris = new Intero[Block_size];
+		Integer *tempris = new Integer[Block_size];
 		tempris[0] = base;
 		while (i < esp)
 		{
@@ -27,7 +27,7 @@ Intero fastexp(Intero base, Intero esp)
 			j++;
 			i *= 2;
 		}
-		Intero result = 1;
+		Integer result = 1;
 		while (esp > 0)
 		{
 			if (esp - i >= 0)
@@ -43,7 +43,7 @@ Intero fastexp(Intero base, Intero esp)
 	}
 }
 
-Intero modexp(Intero base, Intero esp, Intero mod)
+Integer modexp(Integer base, Integer esp, Integer mod)
 {
 	if (esp == 0)
 		return 1;
@@ -51,9 +51,9 @@ Intero modexp(Intero base, Intero esp, Intero mod)
 		return base;
 	else
 	{
-		Intero i = 1;
+		Integer i = 1;
 		int j = 0;
-		Intero *tempris = new Intero[Block_size];
+		Integer *tempris = new Integer[Block_size];
 		tempris[0] = base;
 		while (i < esp)
 		{
@@ -61,7 +61,7 @@ Intero modexp(Intero base, Intero esp, Intero mod)
 			j++;
 			i *= 2;
 		}
-		Intero result = 1;
+		Integer result = 1;
 		while (esp > 0)
 		{
 			if (esp - i >= 0)
@@ -77,16 +77,16 @@ Intero modexp(Intero base, Intero esp, Intero mod)
 	}
 }
 
-bool MRpredicate1 (Intero y, Intero z, Intero N)
+bool MRpredicate1 (Integer y, Integer z, Integer N)
 {
     if (modexp(y,z,N)==1)
         return true;
     else return false;
 }
 
-bool MRpredicate2(Intero y, Intero N, Intero z, Intero w)
+bool MRpredicate2(Integer y, Integer N, Integer z, Integer w)
 {
-    Intero i=0;
+    Integer i=0;
     bool cond = (modexp(y,fastexp(2,i)*z, N) == N-1);
     
     while (!cond && i < w)
@@ -101,9 +101,9 @@ bool MRpredicate2(Intero y, Intero N, Intero z, Intero w)
     
 }
 
-bool MRtest(Intero N)  //Miller-rabin test for prime number
+bool MRtest(Integer N)  //Miller-rabin test for prime number
 {
-    Intero w; Intero z;
+    Integer w; Integer z;
     
     MRscomposition(N,w,z);
     
@@ -111,7 +111,7 @@ bool MRtest(Intero N)  //Miller-rabin test for prime number
     int i=0;
     
     
-    Intero y;
+    Integer y;
     
     while (ris && i < Precision)
     {
@@ -128,12 +128,12 @@ bool MRtest(Intero N)  //Miller-rabin test for prime number
     return ris;
 }
 
-void MRscomposition(Intero N, Intero &w, Intero &z)
+void MRscomposition(Integer N, Integer &w, Integer &z)
 {
-    Intero i=1;
-    Intero acc=2;
+    Integer i=1;
+    Integer acc=2;
     N--;
-    Intero r;    
+    Integer r;    
     while (acc < N)
     {
         r=N/acc;
@@ -148,9 +148,9 @@ void MRscomposition(Intero N, Intero &w, Intero &z)
 }
 
 //extract a random number and search a early prime
-Intero Primegenerator()
+Integer Primegenerator()
 {
-    Intero P = RandNum;
+    Integer P = RandNum;
     if (P%2==0)
         P++;
     
@@ -168,15 +168,15 @@ Intero Primegenerator()
 
 typedef struct
 {
-    Intero x;
-    Intero y;
-    Intero z;
+    Integer x;
+    Integer y;
+    Integer z;
 } triple;
 
 
 
 
-triple ExtendedEuclide(Intero a, Intero b)
+triple ExtendedEuclide(Integer a, Integer b)
 {
     triple result;
     triple temp;
@@ -198,7 +198,7 @@ triple ExtendedEuclide(Intero a, Intero b)
     return result;
 }
 
-Intero inverso(Intero n,Intero Modulo)
+Integer inverso(Integer n,Integer Modulo)
 {
     triple ris = ExtendedEuclide(n,Modulo);
     if (ris.y<0)
@@ -207,7 +207,7 @@ Intero inverso(Intero n,Intero Modulo)
     return  ris.y;
 }
 
-bool coprime (Intero a, Intero b)
+bool coprime (Integer a, Integer b)
 {
     triple temp = ExtendedEuclide(a, b);
     if (temp.x == 1)

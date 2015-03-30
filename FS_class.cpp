@@ -5,7 +5,7 @@
 //  Created by ivan sarno on 24/01/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-// version V.1.5
+// version V.2.0
 
 #include "FS_class.h"
 
@@ -14,29 +14,44 @@ Verifier::Verifier(Key initkey) //take Pubkey
 {
     Pubkey.Mod = initkey.Mod;
     Pubkey.K = initkey.K;
+    state = false;
     Randbitinit
 }
     
-int Verifier::step1(Intero Pu) //take result of Proover step1
+int Verifier::step1(Integer Pu) //take result of Proover step1
 {
+    if(Pu == 0)
+    {
+        state = false;
+        return -1;
+    }
+    
+    
     u=Pu;
     e=Randbit
     return e;
 }
     
-void Verifier::step2(Intero z) //take retult of Proover step2 and change the state
+void Verifier::step2(Integer z) //take retult of Proover step2 and change the state
 {
-    z= (z*z) % Pubkey.Mod;
+    if(z != 0)
+    {
+        z= (z*z) % Pubkey.Mod;
         
-    Intero y;
+        Integer y;
         
-    if (e==1)
-        y = (u * Pubkey.K) % Pubkey.Mod;
-    else y= u;
+        if (e==1)
+            y = (u * Pubkey.K) % Pubkey.Mod;
+        else y= u;
         
-    if (z==y)
-        state = true;
-    else state = false;
+        if (z==y)
+            state = true;
+        else state = false;
+    }
+    else
+        state = false;
+        
+    
 }
     
 bool Verifier::checkstate() //return state of identification
@@ -61,14 +76,14 @@ Proover::Proover(Key initkey) //take Privkey
 }
     
 
-Intero Proover::step1() //start protocol
+Integer Proover::step1() //start protocol
 {
     r= RandNum;
     r %= Privkey.Mod;
     return (r*r) % Privkey.Mod;
 }
     
-Intero Proover::step2(int e) //take result of Verifier step1
+Integer Proover::step2(int e) //take result of Verifier step1
 {
     if (e==0)
         return r;
@@ -89,8 +104,8 @@ void Proover::reset() //reset for next session
 void FS_key_create(Key &Pubkey, Key &Privkey) //take uninitialized K variable and generates Public and Private key
 {
     Randinit
-    Intero PrimeP=Primegen;
-    Intero PrimeQ=Primegen;
+    Integer PrimeP=Primegen;
+    Integer PrimeQ=Primegen;
     
     while (Prime_check(PrimeQ, PrimeP)) //make sure it is appropriate for security standards
     {
@@ -106,10 +121,10 @@ void FS_key_create(Key &Pubkey, Key &Privkey) //take uninitialized K variable an
     Pubkey.K = Privkey.K * Privkey.K % Privkey.Mod;
 }
 
-bool Prime_check(Intero Q, Intero P) //test for prime number security
+bool Prime_check(Integer Q, Integer P) //test for prime number security
 {
-    Intero dif = (P-Q);
-    dif.Abs();
+    Integer dif = (P-Q);
+    abs(dif);
     P=(P-1)/2;
     Q=(Q-1)/2;
     

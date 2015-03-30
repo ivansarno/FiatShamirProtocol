@@ -37,7 +37,7 @@ Usage:
 
 Credit
 
-Arbitrary Precision Library from TTMath (not included in the source) Link: http://www.ttmath.org
+Arbitrary Precision Library from GMP (not included in the source) Link: https://gmplib.org
 
 
 :)

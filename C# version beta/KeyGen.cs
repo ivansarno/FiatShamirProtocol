@@ -11,17 +11,17 @@ namespace ZK_Fiat_Shamir
         private BigInteger _privkey;
 
 
-        private bool Prime_check(ref BigInteger q, ref BigInteger p, int distance) 
+        private bool Prime_check(ref BigInteger q, ref BigInteger p, ulong distance) 
         {
             BigInteger dif = (p - q);
-            BigInteger.Abs(dif);
+            dif = BigInteger.Abs(dif);
             
             return (dif > distance);
         }
 
-        public void KeyCreate(int wordSize = 128, int distance = UInt16.MaxValue, int precision = 20)
+        public void KeyCreate(int wordSize = 128, ulong distance = UInt32.MaxValue, int precision = 20)
         {
-            if (precision < 5 || wordSize < 8 || distance < 0)
+            if (precision < 5 || wordSize < 8)
                 throw new ArgumentException();
 
             RandomNumberGenerator gen = new RNGCryptoServiceProvider();
@@ -29,16 +29,10 @@ namespace ZK_Fiat_Shamir
             BigInteger primeP = generator.GetPrime();
             BigInteger primeQ = generator.GetPrime();
 
-           /* if(primeQ > primeP)             slow
-                while (!Prime_check(ref primeQ, ref primeP, distance))
-                {
-                    primeQ = generator.NextPrime();
-                }
-            else
-                while (!Prime_check(ref primeQ, ref primeP, distance))
-                {
-                    primeP = generator.NextPrime(primeP);
-                }*/
+            while (!Prime_check(ref primeQ, ref primeP, distance))
+            {
+                primeQ = generator.GetPrime();
+            }
 
             _module = primeP*primeQ;
             
@@ -51,9 +45,9 @@ namespace ZK_Fiat_Shamir
             gen.Dispose();
         }
 
-        public void KeyCreate(RandomNumberGenerator gen, int wordSize = 128, int distance = UInt16.MaxValue, int precision = 20)
+        public void KeyCreate(RandomNumberGenerator gen, int wordSize = 128, ulong distance = UInt32.MaxValue, int precision = 20)
         {
-            if (precision < 5 || wordSize < 8 || distance < 0 || gen == null)
+            if (precision < 5 || wordSize < 8 || gen == null)
                 throw new ArgumentException();
 
             Prime generator = new Prime(gen, precision, wordSize / 2);

@@ -29,7 +29,7 @@ namespace ZK_Fiat_Shamir
             BigInteger primeP = generator.GetPrime();
             BigInteger primeQ = generator.GetPrime();
 
-            if(primeQ > primeP)
+           /* if(primeQ > primeP)             slow
                 while (!Prime_check(ref primeQ, ref primeP, distance))
                 {
                     primeQ = generator.NextPrime();
@@ -38,7 +38,7 @@ namespace ZK_Fiat_Shamir
                 while (!Prime_check(ref primeQ, ref primeP, distance))
                 {
                     primeP = generator.NextPrime(primeP);
-                }
+                }*/
 
             _module = primeP*primeQ;
             

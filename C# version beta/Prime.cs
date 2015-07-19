@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Security.Cryptography;
 
 namespace ZK_Fiat_Shamir
@@ -12,6 +13,8 @@ namespace ZK_Fiat_Shamir
 
         public Prime(int precision = 20, int wordSize = 128)
         {
+            if(precision < 5 || wordSize < 8)
+                throw new ArgumentException();
             _precision = precision;
             _generator = new RNGCryptoServiceProvider();
             _buffer = new byte[wordSize];
@@ -20,6 +23,8 @@ namespace ZK_Fiat_Shamir
 
         public Prime(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
         {
+            if (precision < 5 || wordSize < 8 || generator == null)
+                throw new ArgumentException();
             _precision = precision;
             _generator = generator;
             _buffer = new byte[wordSize];
@@ -151,6 +156,8 @@ namespace ZK_Fiat_Shamir
 
         public void Reset(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
         {
+            if (precision < 5 || wordSize < 8 || generator == null)
+                throw new ArgumentException();
             _generator.Dispose();
             _precision = precision;
             _generator = generator;
@@ -160,6 +167,8 @@ namespace ZK_Fiat_Shamir
 
         public void Reset(int precision = 20, int wordSize = 128)
         {
+            if (precision < 5 || wordSize < 8)
+                throw new ArgumentException();
             _generator.Dispose();
             _precision = precision;
             _generator = new RNGCryptoServiceProvider();

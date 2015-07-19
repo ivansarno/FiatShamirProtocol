@@ -21,7 +21,11 @@ namespace ZK_Fiat_Shamir
 
         public void KeyCreate(int wordSize = 128, int distance = UInt16.MaxValue, int precision = 20)
         {
-            Prime generator = new Prime(precision, wordSize);
+            if (precision < 5 || wordSize < 8 || distance < 0)
+                throw new ArgumentException();
+
+            RandomNumberGenerator gen = new RNGCryptoServiceProvider();
+            Prime generator = new Prime(gen, precision, wordSize / 2);
             BigInteger primeP = generator.GetPrime();
             BigInteger primeQ = generator.GetPrime();
 
@@ -39,7 +43,6 @@ namespace ZK_Fiat_Shamir
             _module = primeP*primeQ;
             
             byte[] buffer = new byte[wordSize];
-            RandomNumberGenerator gen = new RNGCryptoServiceProvider();
             gen.GetBytes(buffer);
             buffer[buffer.Length - 1] &= 127;
             _privkey = new BigInteger(buffer);
@@ -48,9 +51,12 @@ namespace ZK_Fiat_Shamir
             gen.Dispose();
         }
 
-        public void KeyCreate(RandomNumberGenerator randomGenerator, int wordSize = 128, int distance = UInt16.MaxValue, int precision = 20)
+        public void KeyCreate(RandomNumberGenerator gen, int wordSize = 128, int distance = UInt16.MaxValue, int precision = 20)
         {
-            Prime generator = new Prime(randomGenerator, precision, wordSize);
+            if (precision < 5 || wordSize < 8 || distance < 0 || gen == null)
+                throw new ArgumentException();
+
+            Prime generator = new Prime(gen, precision, wordSize / 2);
             BigInteger primeP = generator.GetPrime();
             BigInteger primeQ = generator.GetPrime();
 
@@ -68,13 +74,11 @@ namespace ZK_Fiat_Shamir
             _module = primeP * primeQ;
 
             byte[] buffer = new byte[wordSize];
-            RandomNumberGenerator gen = new RNGCryptoServiceProvider();
             gen.GetBytes(buffer);
             buffer[buffer.Length - 1] &= 127;
             _privkey = new BigInteger(buffer);
             _privkey %= _module;
             _pubkey = (_privkey * _privkey) % _module;
-            gen.Dispose();
         }
 
         public BigInteger PrivKey

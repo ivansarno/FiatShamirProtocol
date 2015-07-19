@@ -14,6 +14,8 @@ namespace ZK_Fiat_Shamir
 
         public Verifier(BigInteger pubkey, BigInteger module)
         {
+            if (module <= 0)
+                throw new ArgumentException();
             _key = pubkey;
             _mod = module;
             _state = false;
@@ -22,6 +24,9 @@ namespace ZK_Fiat_Shamir
 
         public bool Step1(ref BigInteger init)
         {
+            if (init == 0)
+                throw new ArgumentException();
+
             _sessionNumber = init;
             _choice = (_bitgen.Next() % 2) == 1;
             return _choice;
@@ -29,20 +34,16 @@ namespace ZK_Fiat_Shamir
 
         public bool Step2(BigInteger proof)
         {
-            if (proof != 0)
-            {
-                proof = (proof * proof) % _mod;
+            proof = (proof * proof) % _mod;
 
-                BigInteger y;
+            BigInteger y;
 
-                if (_choice)
-                    y = (_sessionNumber * _key) % _mod;
-                else y = _sessionNumber;
+            if (_choice)
+                y = (_sessionNumber * _key) % _mod;
+            else y = _sessionNumber;
 
-                _state = proof == y;
-            }
-            else
-                _state = false;
+            _state = proof == y;
+
             return _state;
         }
 

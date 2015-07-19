@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Security.Cryptography;
 
 
@@ -14,6 +15,9 @@ namespace ZK_Fiat_Shamir
 
         public Proover(BigInteger privkey, BigInteger module, int wordSize = 128)
         {
+            if (module <= 0 || wordSize < 8)
+                throw new ArgumentException();
+
             _mod = module;
             _key = privkey;
             _generator = new RNGCryptoServiceProvider();
@@ -22,6 +26,8 @@ namespace ZK_Fiat_Shamir
 
         public Proover(BigInteger privkey, BigInteger module, RandomNumberGenerator gen, int wordSize = 128)
         {
+            if (module <= 0 || wordSize < 8 || gen == null)
+                throw new ArgumentException();
             _mod = module;
             _key = privkey;
             _generator = gen;
@@ -33,7 +39,7 @@ namespace ZK_Fiat_Shamir
             _generator.GetBytes(_buffer);
             _buffer[_buffer.Length - 1] &= 127;
             _sessionNumber = new BigInteger(_buffer);
-            _sessionNumber %= _mod;
+            _sessionNumber %= _mod;//1
             return (_sessionNumber * _sessionNumber) % _mod;
         }
 
@@ -52,6 +58,8 @@ namespace ZK_Fiat_Shamir
 
         public void Reset(RandomNumberGenerator gen)
         {
+            if (gen == null)
+                throw new ArgumentException();
             _generator.Dispose();
             _generator = gen;
         }

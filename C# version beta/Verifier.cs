@@ -21,7 +21,8 @@ namespace ZK_Fiat_Shamir
             _state = false;
             _bitgen = new Random();
         }
-
+		
+		//take the result of Proover.stap1() and return a random choice to send to Proover
         public bool Step1(ref BigInteger init)
         {
             if (init == 0)
@@ -31,7 +32,8 @@ namespace ZK_Fiat_Shamir
             _choice = (_bitgen.Next() % 2) == 1;
             return _choice;
         }
-
+		
+		//take the result of Proover.stap2() and return the state of identification
         public bool Step2(BigInteger proof)
         {
             proof = (proof * proof) % _mod;
@@ -46,7 +48,8 @@ namespace ZK_Fiat_Shamir
 
             return _state;
         }
-
+		
+		//return the state of identification
         public bool Checkstate()
         {
             return _state;

@@ -4,13 +4,15 @@ using System.Security.Cryptography;
 
 namespace ZK_Fiat_Shamir
 {
+	//Utility for prime numbers
     public class Prime
     {
-        private int _precision;
+        private int _precision; //precision of Miller-Rabin primality test
         private RandomNumberGenerator _generator;
-        private byte[] _buffer;
-        private BigInteger _current;
+        private byte[] _buffer; //used for random number generation
+        private BigInteger _current; //current prime number, by default is 3
 
+		//wordSize: length in bytes of number generated
         public Prime(int precision = 20, int wordSize = 128)
         {
             if(precision < 5 || wordSize < 8)
@@ -20,7 +22,8 @@ namespace ZK_Fiat_Shamir
             _buffer = new byte[wordSize];
             _current = 3;
         }
-
+		
+		//version with user's random number generator
         public Prime(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
         {
             if (precision < 5 || wordSize < 8 || generator == null)
@@ -70,16 +73,17 @@ namespace ZK_Fiat_Shamir
             while (ris && i < _precision)
             {
                 _generator.GetBytes(_buffer);
-                _buffer[_buffer.Length - 1] &= 127;
+                _buffer[_buffer.Length - 1] &= 127; //forces a positive number
                 y = new BigInteger(_buffer);
                 y = y % number;
-                while (y < 2)
+                while (y < 2) //avoids extraction of 0 and 1
                 {
                     _generator.GetBytes(_buffer);
                     _buffer[_buffer.Length - 1] &= 127;
                     y = new BigInteger(_buffer);
                     y = y % number;
                 }
+				//test
                 ris = (BigInteger.GreatestCommonDivisor(y, number) == 1) && (MRpredicate1(ref y, ref z, ref number) || MRpredicate2(ref y, ref number, ref z, w));
                 i++;
             }
@@ -92,7 +96,7 @@ namespace ZK_Fiat_Shamir
             BigInteger acc=2;
             number--;
             BigInteger r;
-            while (acc < number)
+            while (acc < number) //iterative scomposition
             {
                 r=number/acc;
                 if ((number%acc==0) && (r%2==1))
@@ -157,8 +161,7 @@ namespace ZK_Fiat_Shamir
         public void Reset(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
         {
             if (precision < 5 || wordSize < 8 || generator == null)
-                throw new ArgumentException();
-            _generator.Dispose();
+                throw new ArgumentException()
             _precision = precision;
             _generator = generator;
             _buffer = new byte[wordSize];

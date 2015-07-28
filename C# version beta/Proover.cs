@@ -23,7 +23,8 @@ namespace ZK_Fiat_Shamir
             _generator = new RNGCryptoServiceProvider();
             _buffer = new byte[wordSize];
         }
-
+		
+		//version with user's random number generator
         public Proover(BigInteger privkey, BigInteger module, RandomNumberGenerator gen, int wordSize = 128)
         {
             if (module <= 0 || wordSize < 8 || gen == null)
@@ -33,7 +34,8 @@ namespace ZK_Fiat_Shamir
             _generator = gen;
             _buffer = new byte[wordSize];
         }
-
+		
+		//start the protocol
         public BigInteger Step1()
         {
             _generator.GetBytes(_buffer);
@@ -43,6 +45,7 @@ namespace ZK_Fiat_Shamir
             return (_sessionNumber * _sessionNumber) % _mod;
         }
 
+		//take the result of Verifier.step1() and return a number to send to Verifier
         public BigInteger Step2(bool choice)
         {
             if (choice)
@@ -56,6 +59,7 @@ namespace ZK_Fiat_Shamir
             _generator = new RNGCryptoServiceProvider();
         }
 
+		//version with user's random number generator
         public void Reset(RandomNumberGenerator gen)
         {
             if (gen == null)

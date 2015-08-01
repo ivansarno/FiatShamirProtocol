@@ -161,7 +161,7 @@ namespace ZK_Fiat_Shamir
         public void Reset(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
         {
             if (precision < 5 || wordSize < 8 || generator == null)
-                throw new ArgumentException()
+                throw new ArgumentException();
             _precision = precision;
             _generator = generator;
             _buffer = new byte[wordSize];

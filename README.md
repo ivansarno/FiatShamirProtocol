@@ -40,7 +40,7 @@ Usage:
 
 Credit
 
-Arbitrary Precision Library from GMP (not included in the source) Link: https://gmplib.org
+Arbitrary Precision Library for C++ version from GMP (not included in the source) Link: https://gmplib.org
 
 
 :)

@@ -5,13 +5,14 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.0
+//version V.3.1
 
 #ifndef __ZK__ZK_Fiat_Shamir__
 #define __ZK__ZK_Fiat_Shamir__
 
 #include <stdio.h>
 #include "Prime.h"
+#define ZK_check
 
 namespace ZKFS
 {
@@ -28,10 +29,10 @@ namespace ZKFS
         int size;
         
     public:
-        Proover(BigInteger privkey, BigInteger modulus, int size);// size = number of bit of the key
-        Proover(BigInteger privkey, BigInteger modulus, int size, Aux::Generator generator);
+        Proover(BigInteger privkey, BigInteger modulus, unsigned int size);// size = number of bit of the key
+        Proover(BigInteger privkey, BigInteger modulus, unsigned int size, Aux::Generator generator);// subclass of my class for random number generator
         BigInteger step1();
-        BigInteger step2(bool choice);
+        BigInteger step2(bool choice); //take result of verifier step1
         
     };
     
@@ -51,8 +52,11 @@ namespace ZKFS
         bool checkstate(); //return state of identification
     };
     
-    //initializes the keys and modulus, size = number of bit of the keys, distance is distance between prime number of the key, precision is precision of Miller-Rabin primality test
-    void KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Aux::Generator gen, int size, int precision = 20, unsigned long = UINT32_MAX);
+    //initializes the keys and modulus,
+    //size = number of bit of the keys,
+    //distance is distance between prime number of the key,
+    //precision is precision of Miller-Rabin primality test, error is 1/2^2*precision
+    bool KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Aux::Generator gen, unsigned int size, unsigned int precision = 20, unsigned long = UINT32_MAX);
 }
 
 #endif /* defined(__ZK__ZK_Fiat_Shamir__) */

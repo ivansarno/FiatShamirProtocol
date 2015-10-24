@@ -5,13 +5,13 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.0
+//version V.3.1
 
 #include "ZK-Fiat-Shamir.h"
 
 using namespace ZKFS;
 
-Proover::Proover(BigInteger privkey, BigInteger modulus, int size)
+Proover::Proover(BigInteger privkey, BigInteger modulus, unsigned int size)
 {
     key = privkey;
     this->modulus = modulus;
@@ -19,7 +19,7 @@ Proover::Proover(BigInteger privkey, BigInteger modulus, int size)
     gen = Aux::Generator();
 }
 
-Proover::Proover(BigInteger privkey, BigInteger modulus, int size, Aux::Generator generator)
+Proover::Proover(BigInteger privkey, BigInteger modulus, unsigned int size, Aux::Generator generator)
 {
     key = privkey;
     this->modulus = modulus;
@@ -57,7 +57,7 @@ bool Verifier::step1(BigInteger session_number) //take result of Proover step1
 
 bool Verifier::step2(BigInteger proof) //take retult of Proover step2 and change the state
 {
-    proof= (proof*proof) % modulus;
+    proof = (proof*proof) % modulus;
     
     BigInteger y;
     
@@ -88,17 +88,28 @@ bool prime_check(BigInteger Q, BigInteger P, unsigned long distance)
     return dif > distance;
 }
 
-void ZKFS::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Aux::Generator gen, int size, int precision, unsigned long distance)
+bool ZKFS::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Aux::Generator gen, unsigned int size, unsigned int precision, unsigned long distance)
 {
+    if(size < 64 || precision < 1)
+        return false;
+    
+    Aux::power_buffer_init(size);
+    
     BigInteger primeP = Prime::Generates(gen, size /2, precision);
     BigInteger primeQ = Prime::Generates(gen, size /2, precision);
     
+#ifdef ZK_check
     while(!prime_check(primeP, primeQ, distance))
     {
         primeQ = Prime::Generates(gen, size /2, precision);
     }
+#endif
     
     modulus = primeP * primeQ;
     privkey = gen.get(size) % modulus;
     pubkey = (privkey * privkey) % modulus;
+    
+    Aux::power_buffer_release();
+    
+    return true;
 }

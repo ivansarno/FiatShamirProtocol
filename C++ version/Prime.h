@@ -5,19 +5,19 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.1
+//version V.3.2
 
 #ifndef __RSA__Prime__
 #define __RSA__Prime__
 #include <gmpxx.h>
-#include "Aux.h"
+#include "Utils.h"
 
 
 namespace ZKFS
 {
     namespace Prime
     {
-        using namespace Aux;
+        using namespace Utils;
         
         //gen = random number generator
         //size = number of  bit of nember tested

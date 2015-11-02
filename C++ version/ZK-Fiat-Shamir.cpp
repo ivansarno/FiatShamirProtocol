@@ -5,7 +5,7 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.1
+//version V.3.2
 
 #include "ZK-Fiat-Shamir.h"
 
@@ -16,10 +16,10 @@ Proover::Proover(BigInteger privkey, BigInteger modulus, unsigned int size)
     key = privkey;
     this->modulus = modulus;
     this->size = size;
-    gen = Aux::Generator();
+    gen = Utils::Generator();
 }
 
-Proover::Proover(BigInteger privkey, BigInteger modulus, unsigned int size, Aux::Generator generator)
+Proover::Proover(BigInteger privkey, BigInteger modulus, unsigned int size, Utils::Generator generator)
 {
     key = privkey;
     this->modulus = modulus;
@@ -88,12 +88,12 @@ bool prime_check(BigInteger Q, BigInteger P, unsigned long distance)
     return dif > distance;
 }
 
-bool ZKFS::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Aux::Generator gen, unsigned int size, unsigned int precision, unsigned long distance)
+bool ZKFS::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Utils::Generator gen, unsigned int size, unsigned int precision, unsigned long distance)
 {
     if(size < 64 || precision < 1)
         return false;
     
-    Aux::power_buffer_init(size);
+    Utils::power_buffer_init(size);
     
     BigInteger primeP = Prime::Generates(gen, size /2, precision);
     BigInteger primeQ = Prime::Generates(gen, size /2, precision);
@@ -109,7 +109,7 @@ bool ZKFS::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, 
     privkey = gen.get(size) % modulus;
     pubkey = (privkey * privkey) % modulus;
     
-    Aux::power_buffer_release();
+    Utils::power_buffer_release();
     
     return true;
 }

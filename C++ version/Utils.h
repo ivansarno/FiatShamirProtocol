@@ -5,17 +5,17 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.1
+//version V.3.2
 
-#ifndef __RSA__Aux__
-#define __RSA__Aux__
+#ifndef __RSA__Utils__
+#define __RSA__Utils__
 #include <gmpxx.h>
 #include <time.h>
 #include <stdlib.h>
 
 namespace ZKFS
 {
-    namespace Aux
+    namespace Utils
     {
         typedef mpz_class BigInteger;
         BigInteger pow(const BigInteger &base, BigInteger exp);
@@ -43,4 +43,4 @@ namespace ZKFS
     }
 }
 
-#endif /* defined(__RSA__Aux__) */
+#endif /* defined(__RSA__Utils__) */

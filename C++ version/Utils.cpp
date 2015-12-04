@@ -5,17 +5,12 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.2
+//version V.3.5
 
 #include "Utils.h"
 
 using namespace ZKFS;
 using namespace Utils;
-
-//buffer
-BigInteger * Utils::power_buffer = NULL;
-unsigned int Utils::buffer_size = 1024;
-
 
 
 //random number generator, only for test
@@ -33,84 +28,39 @@ BigInteger Utils::Generator::get(unsigned int size)
         byte[i] = rand();
     
     BigInteger n = byte2biginteger(byte, size);
-    delete [] byte;
+    delete[] byte;
     return n;
 };
 
 
-BigInteger Utils::pow(const BigInteger &base, BigInteger exp)
+BigInteger Utils::pow(BigInteger base, BigInteger exp)
 {
-    if (exp == 0)
-        return 1;
-    if (exp == 1)
-        return base;
-    else
+    BigInteger resoult = 1;
+    
+    while(exp > 0)
     {
-        
-#ifdef ZK_INDIPENDENT
-        power_buffer_check();//for using outside of ZK
-#endif
-        
-        BigInteger i = 1;
-        int j = 0;
-        power_buffer[0] = base;
-        while (i < exp) //iterates dupplication
-        {
-            power_buffer[j+1] = power_buffer[j] * power_buffer[j];
-            j++;
-            i *= 2;
-        }
-        BigInteger result = 1;
-        while (exp > 0)//composes intermediate results
-        {
-            if (exp - i >= 0)
-            {
-                result *= power_buffer[j];
-                exp -= i;
-            }
-            j--;
-            i /= 2;
-        }
-        return result;
+        if((exp & 1) == 1)
+            resoult *= base;
+        base *= base;
+        exp >>=1;
     }
+    
+    return resoult;
 }
 
-BigInteger Utils::mod_pow(const BigInteger &base, BigInteger exp, const BigInteger &mod)
+BigInteger Utils::mod_pow(BigInteger base, BigInteger exp, const BigInteger &mod)
 {
-    if (exp == 0)
-        return 1;
-    if (exp == 1)
-        return base;
-    else
+    BigInteger resoult = 1;
+    
+    while(exp > 0)
     {
-        
-#ifdef ZK_INDIPENDENT
-        power_buffer_check();//for using outside of ZK
-#endif
-        
-        BigInteger i = 1;
-        int j = 0;
-        power_buffer[0] = base;
-        while (i < exp)     //iterates dupplication
-        {
-            power_buffer[j+1] = (power_buffer[j] * power_buffer[j]) % mod;
-            j++;
-            i *= 2;
-        }
-        BigInteger result = 1;
-        while (exp > 0)     //composes intermediate results
-        {
-            if (exp - i >= 0)
-            {
-                result = (result * power_buffer[j]) % mod;
-                exp -= i;
-            }
-            j--;
-            i /= 2;
-        }
-        
-        return result;
+        if((exp & 1) == 1)
+            resoult = (base * resoult) % mod;
+        base = (base * base) % mod;
+        exp >>=1;
     }
+    
+    return resoult;
 }
 
 typedef struct
@@ -143,7 +93,7 @@ triple ExtendedEuclide(BigInteger a, BigInteger b)
 }
 
 //iterative version of extended euclide
-void IExtendedEuclide(const BigInteger &a, const BigInteger &b, BigInteger &MCD, BigInteger &inverse)
+void IExtendedEuclide(const BigInteger &a, const BigInteger &b, BigInteger &MCD, BigInteger &inverse, unsigned int size)
 {
     if (b == 0)
     {
@@ -152,10 +102,10 @@ void IExtendedEuclide(const BigInteger &a, const BigInteger &b, BigInteger &MCD,
         return;
     }
     
-    long i = 0;
+    unsigned long i = 0;
     BigInteger temp, intermediate;
-    BigInteger *buffer_a = new BigInteger[buffer_size]; //buffer for intermediates values
-    BigInteger *buffer_b = new BigInteger[buffer_size];
+    BigInteger *buffer_a = new BigInteger[size]; //buffer for intermediates values
+    BigInteger *buffer_b = new BigInteger[size];
     buffer_a[0] = a;
     buffer_b[0] = b;
     
@@ -182,7 +132,7 @@ void IExtendedEuclide(const BigInteger &a, const BigInteger &b, BigInteger &MCD,
     delete [] buffer_b;
 }
 
-BigInteger Utils::inverse(const BigInteger &number, const BigInteger &modulus)
+BigInteger Utils::inverse(const BigInteger &number, const BigInteger &modulus, unsigned int size)
 {
     if (modulus == 0)
     {
@@ -191,8 +141,8 @@ BigInteger Utils::inverse(const BigInteger &number, const BigInteger &modulus)
     
     long i = 0;
     BigInteger result, temp, intermediate;
-    BigInteger *buffer_a = new BigInteger[buffer_size];
-    BigInteger *buffer_b = new BigInteger[buffer_size];
+    BigInteger *buffer_a = new BigInteger[size];
+    BigInteger *buffer_b = new BigInteger[size];
     
     buffer_a[0] = number;
     buffer_b[0] = modulus;
@@ -241,27 +191,6 @@ bool Utils::coprime (BigInteger a, BigInteger b)
     }
     
     return a == 1;
-}
-
-//buffer routines
-void Utils::power_buffer_check()
-{
-    if(power_buffer == NULL)
-    {
-        power_buffer = new BigInteger[buffer_size];
-    }
-}
-
-void Utils::power_buffer_init(unsigned int size)
-{
-    buffer_size = size;
-    power_buffer = new BigInteger[size];
-}
-
-void Utils::power_buffer_release()
-{
-    delete [] power_buffer;
-    power_buffer = NULL;
 }
 
 

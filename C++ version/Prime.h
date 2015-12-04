@@ -5,7 +5,7 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.2
+//version V.3.5
 
 #ifndef __RSA__Prime__
 #define __RSA__Prime__
@@ -20,7 +20,7 @@ namespace ZKFS
         using namespace Utils;
         
         //gen = random number generator
-        //size = number of  bit of nember tested
+        //size = number of  bit of namber tested
         //precision = error of MIller-Rabin test = 1/2^(2* precision)
         bool IsPrime(const BigInteger &number, Generator &gen, unsigned int size, unsigned int precision = 20);
         

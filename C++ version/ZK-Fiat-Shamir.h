@@ -5,7 +5,7 @@
 //  Created by ivan sarno on 24/08/15.
 //  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.2
+//version V.3.5
 
 #ifndef __ZK__ZK_Fiat_Shamir__
 #define __ZK__ZK_Fiat_Shamir__

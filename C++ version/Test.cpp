@@ -5,7 +5,7 @@
 //  Created by ivan sarno on 22/10/15.
 //  Copyright © 2015 ivan sarno. All rights reserved.
 //
-//version V.3.2
+//version V.3.5
 
 #include "Test.h"
 #include "ZK-Fiat-Shamir.h"
@@ -25,10 +25,9 @@ bool Test::DefaultTest(unsigned int size, unsigned int test_precision)
         return false;
     }
     
-    int iteration;
+    int iteration = 0;
     bool ran;
     BigInteger com;
-    iteration = 0;
     bool result = true;
     Utils::Generator gen;
     BigInteger priv, pub, modulus;

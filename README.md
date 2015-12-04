@@ -1,11 +1,13 @@
 # Fiat-Shamir_ZK-Protocol
 OOP Fiat-Shamir Zero Knowledge Protocol implementation
 
-2 version are avaiable, C++ and C#
+2 version are avaiables, C++ and C#
 
 Library includes:
 
--the fun KeyGen for keys generation
+-the fun KeyGen for keys generation(C++)
+
+-KeyGen class(C#)
 
 -Proover class
 

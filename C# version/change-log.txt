@@ -1,0 +1,9 @@
+Version 1.5
+
+1) new methods for tests
+2) Prover and Prime implements IDisposable
+3) inline documentation
+4) performance and security improvement
+5) redesign of some parts of the library
+
+AAA This version is not backwards compatible

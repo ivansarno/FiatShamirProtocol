@@ -1,33 +1,49 @@
-﻿using System;
+﻿//version V.1.1
+
+using System;
 using System.Numerics;
 using System.Security.Cryptography;
 
 namespace ZK_Fiat_Shamir
 {
-	//Utility for prime numbers
-    public class Prime
-    {
-        private int _precision; //precision of Miller-Rabin primality test
-        private RandomNumberGenerator _generator;
-        private byte[] _buffer; //used for random number generation
-        private BigInteger _current; //current prime number, by default is 3
 
-		//wordSize: length in bytes of number generated
-        public Prime(int precision = 20, int wordSize = 128)
+    /// <summary>
+    /// Utility for prime numbers.
+    /// </summary>
+    public class Prime : IDisposable
+    {
+        private readonly uint _precision; //precision of Miller-Rabin primality test
+        private readonly RandomNumberGenerator _generator;
+        private readonly byte[] _buffer; //used for random number generation
+        private BigInteger _current; //current prime number, by default is 3
+        private bool _disposed;
+        
+        /// <summary>
+        /// Version with built-in random number generator.
+        /// </summary>
+        /// <param name="precision">precision of Miller-Rabin test, error = 1/2^(2*precision)</param>
+        /// <param name="wordSize">length in bytes of number generated</param>
+        public Prime(uint precision = 20, uint wordSize = 128)
         {
             if(precision < 5 || wordSize < 8)
-                throw new ArgumentException();
+                throw new ArgumentException("precision < 5 or wordSize < 8");
             _precision = precision;
             _generator = new RNGCryptoServiceProvider();
             _buffer = new byte[wordSize];
             _current = 3;
         }
-		
-		//version with user's random number generator
-        public Prime(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
+
+
+        /// <summary>
+        /// Version with user's random number generator, it is not disposed.
+        /// </summary>
+        /// <param name="generator">random number generator</param>
+        /// <param name="precision">precision of Miller-Rabin test, error = 1/2^(2*precision)</param>
+        /// <param name="wordSize">length in bytes of number generated</param>
+        public Prime(RandomNumberGenerator generator, uint precision = 20, uint wordSize = 128)
         {
             if (precision < 5 || wordSize < 8 || generator == null)
-                throw new ArgumentException();
+                throw new ArgumentException("precision < 5 or wordSize < 8 or gen == null");
             _precision = precision;
             _generator = generator;
             _buffer = new byte[wordSize];
@@ -38,34 +54,34 @@ namespace ZK_Fiat_Shamir
 
         private static bool MRpredicate1(ref BigInteger y, ref BigInteger z, ref BigInteger number)
         {
-            if (BigInteger.ModPow(y, z, number) == 1)
-                return true;
-            return false;
+            return BigInteger.ModPow(y, z, number) == 1;
         }
 
-        private static bool MRpredicate2(ref BigInteger y, ref BigInteger number, ref BigInteger z, int w)
+        private static bool MRpredicate2(ref BigInteger y, ref BigInteger number, ref BigInteger z, uint w)
         {
-            int i = 0;
-            bool cond = (BigInteger.ModPow(y, BigInteger.Pow(2, i) * z, number) == number - 1);
+            uint i = 0;
+            BigInteger pow2 = 1;
+            bool cond = (BigInteger.ModPow(y, z, number) == number - 1);
 
             while (!cond && i < w)
             {
                 i++;
-                cond = (BigInteger.ModPow(y, BigInteger.Pow(2, i) * z, number) == number - 1);
+                pow2 <<= 1;
+                cond = (BigInteger.ModPow(y, pow2 * z, number) == number - 1);
             }
 
             return i != w;
         }
 
-        private bool MRtest(ref BigInteger number)  
+        private bool MRtest(ref BigInteger number)
         {
-            int w = 0;
-            BigInteger z = 0;
+            uint w;
+            BigInteger z;
 
-            MRscomposition(number, ref w, ref z);
+            MRscomposition(ref number, out w, out z);
 
             bool ris = true;
-            int i = 0;
+            uint i = 0;
 
 
             BigInteger y;
@@ -90,35 +106,36 @@ namespace ZK_Fiat_Shamir
             return ris;
         }
 
-        private static void MRscomposition(BigInteger number, ref int w, ref BigInteger z)
+        private static void MRscomposition(ref BigInteger number, out uint w, out BigInteger z)
         {
-            int i = 1;
-            BigInteger acc=2;
-            number--;
-            BigInteger r;
-            while (acc < number) //iterative scomposition
+            z = number - 1;
+            w = 0;
+            while ((z&1) == 0)
             {
-                r=number/acc;
-                if ((number%acc==0) && (r%2==1))
-                {
-                    w = i;
-                    z=r;
-                }
-                i++;
-                acc = acc * 2;
+                w++;
+                z >>= 1;
             }
         }
 
+
+        /// <summary>
+        /// Primality test.
+        /// </summary>
+        /// <param name="number">number to test</param>
+        /// <returns>true if number is prime</returns>
         public bool IsPrime(ref BigInteger number)
         {
-            if (number < 2)
-                return false;
-            return MRtest(ref number);
+            return number >= 2 && MRtest(ref number);
         }
 
+        /// <summary>
+        /// Return the first number following the argument.
+        /// </summary>
+        /// <param name="number">current number</param>
+        /// <returns>next prime number</returns>
         public BigInteger NextPrime(BigInteger number)
         {
-            if (number % 2 == 0)
+            if ((number & 1) == 0)
                 number++;
 
             while (!MRtest(ref number ))//test primality
@@ -130,6 +147,10 @@ namespace ZK_Fiat_Shamir
             return number;
         }
 
+        /// <summary>
+        /// Return the first number following that retrieved the last time.
+        /// </summary>
+        /// <returns>next prime number</returns>
         public BigInteger NextPrime()
         {
             _current += 2;
@@ -141,12 +162,17 @@ namespace ZK_Fiat_Shamir
             return _current;
         }
 
+
+        /// <summary>
+        /// Generates a prime number.
+        /// </summary>
+        /// <returns>Random prime number.</returns>
         public BigInteger GetPrime()
         {
             _generator.GetBytes(_buffer);
             _buffer[_buffer.Length - 1] &= 127;
             BigInteger p = new BigInteger(_buffer);
-            if (p % 2 == 0)
+            if ((p & 1) == 0)
                 p++;
 
             while (!MRtest(ref p))//test primality
@@ -158,27 +184,25 @@ namespace ZK_Fiat_Shamir
             return p;
         }
 
-        public void Reset(RandomNumberGenerator generator, int precision = 20, int wordSize = 128)
+        //IDisposable pattern implementation
+        public void Dispose()
         {
-            if (precision < 5 || wordSize < 8 || generator == null)
-                throw new ArgumentException();
-            _precision = precision;
-            _generator = generator;
-            _buffer = new byte[wordSize];
-            _current = 3;
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public void Reset(int precision = 20, int wordSize = 128)
+        protected virtual void Dispose(bool disposing)
         {
-            if (precision < 5 || wordSize < 8)
-                throw new ArgumentException();
-            _generator.Dispose();
-            _precision = precision;
-            _generator = new RNGCryptoServiceProvider();
-            _buffer = new byte[wordSize]; 
-            _current = 3;
-        }
-   }
+            if (_disposed)
+                return;
 
+            if (disposing)
+            {
+                _generator.Dispose();
+            }
+
+            _disposed = true;
+        }
+    }
 
 }

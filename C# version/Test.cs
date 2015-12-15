@@ -1,4 +1,4 @@
-﻿//version V.1.5
+﻿//version V.2.0
 
 using System.Numerics;
 using System.Security.Cryptography;
@@ -15,7 +15,7 @@ namespace ZK_Fiat_Shamir
         /// <returns>resoult of test</returns>
         public static bool DefaultTest(uint wordSize=128, uint testPrecision=20)
         {
-            if (wordSize < 64 || testPrecision < 1)
+            if (wordSize < 8 || testPrecision < 1)
             {
                 System.Console.WriteLine("ZKFS test invalid input\n");
                 return false;
@@ -26,52 +26,53 @@ namespace ZK_Fiat_Shamir
             BigInteger com;
             bool result = true;
             KeyGen kg = new KeyGen();
-            kg.KeyCreate(wordSize);
-            Verifier V = new Verifier(kg.PublicKey, kg.Module);
-            Proover P = new Proover(kg.PrivateKey, kg.Module);
-
+            var gen = new RNGCryptoServiceProvider();
+            kg.KeyCreate(gen, wordSize);
+            Verifier v = new Verifier(kg.PublicKey, kg.Module);
+            Proover p = new Proover(kg.PrivateKey, kg.Module, gen);
+            
             //test with key
             while (iteration < testPrecision && result)
             {
-                com = P.Step1();
-                ran = V.Step1(ref com);
-                com = P.Step2(ran);
-                V.Step2(com);
-                result = V.Checkstate();
+                com = p.Step1();
+                ran = v.Step1(ref com);
+                com = p.Step2(ran);
+                v.Step2(com);
+                result = v.Checkstate();
                 iteration++;
             }
 
             if (!result) //if not verified, fail
             {
                 System.Console.WriteLine("ZKFS test ERROR\n");
-                P.Dispose();
+                gen.Dispose();
                 return false;
             }
 
-            P.Dispose();
+            
             //test without key
             BigInteger falseKey = kg.PrivateKey - (kg.PrivateKey/3); 
-            P = new Proover(falseKey, kg.Module);
+            p = new Proover(falseKey, kg.Module, gen);
             iteration = 0;
             while (iteration < testPrecision && result)
             {
-                com = P.Step1();
-                ran = V.Step1(ref com);
-                com = P.Step2(ran);
-                V.Step2(com);
-                result = V.Checkstate();
+                com = p.Step1();
+                ran = v.Step1(ref com);
+                com = p.Step2(ran);
+                v.Step2(com);
+                result = v.Checkstate();
                 iteration++;
             }
 
             if (result) //if verified, fail
             {
                 System.Console.WriteLine("ZKFS test ERROR\n");
-                P.Dispose();
+                gen.Dispose();
                 return false;
             }
             
             System.Console.WriteLine("ZKFS test OK\n");
-            P.Dispose();
+            gen.Dispose();
             return true;
         }
 
@@ -84,10 +85,11 @@ namespace ZK_Fiat_Shamir
         /// <param name="primePrecision">percision of primality test, error = 1/2^(2*precision)</param>
         /// <param name="generator">random number generator, it is not disposed</param>
         /// <param name="primeDistance">distance between 2 prime, for security</param>
+        /// <param name="threads">number of threads to use</param>
         /// <returns>resoult of test</returns>
-        public static bool CustomTest(uint wordSize, uint testPrecision, uint primePrecision, RandomNumberGenerator generator, ulong primeDistance=uint.MaxValue)
+        public static bool CustomTest(uint wordSize, uint testPrecision, uint primePrecision, RandomNumberGenerator generator, ulong primeDistance=uint.MaxValue, int threads = 0)
         {
-            if (wordSize < 64 || testPrecision < 1)
+            if (wordSize < 8 || testPrecision < 1)
             {
                 System.Console.WriteLine("ZKFS test invalid input\n");
                 return false;
@@ -98,18 +100,18 @@ namespace ZK_Fiat_Shamir
             BigInteger com;
             bool result = true;
             KeyGen kg = new KeyGen();
-            kg.KeyCreate(generator, wordSize, primeDistance, primePrecision);
-            Verifier V = new Verifier(kg.PublicKey, kg.Module);
-            Proover P = new Proover(kg.PrivateKey, kg.Module, generator);
+            kg.ParallelKeyCreate(generator, wordSize, primeDistance, primePrecision, threads);
+            Verifier v = new Verifier(kg.PublicKey, kg.Module);
+            Proover p = new Proover(kg.PrivateKey, kg.Module, generator);
 
             //test with key
             while (iteration < testPrecision && result)
             {
-                com = P.Step1();
-                ran = V.Step1(ref com);
-                com = P.Step2(ran);
-                V.Step2(com);
-                result = V.Checkstate();
+                com = p.Step1();
+                ran = v.Step1(ref com);
+                com = p.Step2(ran);
+                v.Step2(com);
+                result = v.Checkstate();
                 iteration++;
             }
 
@@ -121,15 +123,15 @@ namespace ZK_Fiat_Shamir
 
             //test without key
             BigInteger falseKey = kg.PrivateKey - (kg.PrivateKey / 3);
-            P = new Proover(falseKey, kg.Module);
+            p = new Proover(falseKey, kg.Module, generator);
             iteration = 0;
             while (iteration < testPrecision && result)
             {
-                com = P.Step1();
-                ran = V.Step1(ref com);
-                com = P.Step2(ran);
-                V.Step2(com);
-                result = V.Checkstate();
+                com = p.Step1();
+                ran = v.Step1(ref com);
+                com = p.Step2(ran);
+                v.Step2(com);
+                result = v.Checkstate();
                 iteration++;
             }
 
@@ -142,6 +144,5 @@ namespace ZK_Fiat_Shamir
             System.Console.WriteLine("ZKFS test OK\n");
             return true;
         }
-
     }
 }

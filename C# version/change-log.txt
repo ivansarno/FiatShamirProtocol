@@ -1,3 +1,13 @@
+Version 2.0
+
+1) KeyGen now support multithreading for key creation
+2) Parallel key creation 2.71 faster than sequential version
+3) Redesign of some parts of the library
+4) Prime now is an internal class
+5) General improvements
+
+AAA This version is not backwards compatible
+
 Version 1.5
 
 1) new methods for tests

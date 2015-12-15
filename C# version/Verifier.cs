@@ -1,4 +1,4 @@
-﻿//version V.1.5
+﻿//version V.2.0
 
 using System;
 using System.Numerics;
@@ -8,6 +8,7 @@ namespace ZK_Fiat_Shamir
     /// <summary>
     /// Object that checks whether an object Proover has the private key 
     /// that is associated with his public key.
+    /// Single iteration of protocol have error ratio = 1/2.
     /// </summary>
     public class Verifier
     {
@@ -76,6 +77,7 @@ namespace ZK_Fiat_Shamir
         
         /// <summary>
         /// Return the state of identification in this iteration.
+        /// Single iteration of protocol have error ratio = 1/2.
         /// </summary>
         /// <returns>true if the Proover is identified</returns>
         public bool Checkstate()

@@ -1,55 +1,36 @@
-﻿//version V.1.1
+﻿//version V.2.0
 
 using System;
 using System.Numerics;
-using System.Security.Cryptography;
+using System.Threading;
 
 namespace ZK_Fiat_Shamir
 {
 
     /// <summary>
     /// Utility for prime numbers.
+    /// for internal use, for now.
     /// </summary>
-    public class Prime : IDisposable
+    internal class Prime
     {
         private readonly uint _precision; //precision of Miller-Rabin primality test
-        private readonly RandomNumberGenerator _generator;
+        private readonly Random _generator;
         private readonly byte[] _buffer; //used for random number generation
-        private BigInteger _current; //current prime number, by default is 3
-        private bool _disposed;
-        
+
+
         /// <summary>
-        /// Version with built-in random number generator.
-        /// </summary>
+        ///  </summary>
+        /// <param name="seed">seed of random number generator</param>
         /// <param name="precision">precision of Miller-Rabin test, error = 1/2^(2*precision)</param>
         /// <param name="wordSize">length in bytes of number generated</param>
-        public Prime(uint precision = 20, uint wordSize = 128)
+        public Prime(int seed, uint precision = 20, uint wordSize = 128)
         {
-            if(precision < 5 || wordSize < 8)
+            if (precision < 5 || wordSize < 8)
                 throw new ArgumentException("precision < 5 or wordSize < 8");
             _precision = precision;
-            _generator = new RNGCryptoServiceProvider();
+            _generator = new Random(seed);
             _buffer = new byte[wordSize];
-            _current = 3;
         }
-
-
-        /// <summary>
-        /// Version with user's random number generator, it is not disposed.
-        /// </summary>
-        /// <param name="generator">random number generator</param>
-        /// <param name="precision">precision of Miller-Rabin test, error = 1/2^(2*precision)</param>
-        /// <param name="wordSize">length in bytes of number generated</param>
-        public Prime(RandomNumberGenerator generator, uint precision = 20, uint wordSize = 128)
-        {
-            if (precision < 5 || wordSize < 8 || generator == null)
-                throw new ArgumentException("precision < 5 or wordSize < 8 or gen == null");
-            _precision = precision;
-            _generator = generator;
-            _buffer = new byte[wordSize];
-            _current = 3;
-        }
-
 
 
         private static bool MRpredicate1(ref BigInteger y, ref BigInteger z, ref BigInteger number)
@@ -67,7 +48,7 @@ namespace ZK_Fiat_Shamir
             {
                 i++;
                 pow2 <<= 1;
-                cond = (BigInteger.ModPow(y, pow2 * z, number) == number - 1);
+                cond = (BigInteger.ModPow(y, pow2*z, number) == number - 1);
             }
 
             return i != w;
@@ -88,19 +69,20 @@ namespace ZK_Fiat_Shamir
 
             while (ris && i < _precision)
             {
-                _generator.GetBytes(_buffer);
+                //extract a random number
+                _generator.NextBytes(_buffer);
                 _buffer[_buffer.Length - 1] &= 127; //forces a positive number
                 y = new BigInteger(_buffer);
-                y = y % number;
+                ////
+                y = y%number;
                 while (y < 2) //avoids extraction of 0 and 1
                 {
-                    _generator.GetBytes(_buffer);
-                    _buffer[_buffer.Length - 1] &= 127;
-                    y = new BigInteger(_buffer);
-                    y = y % number;
+                    y += _generator.Next();
+                    y = y%number;
                 }
-				//test
-                ris = (BigInteger.GreatestCommonDivisor(y, number) == 1) && (MRpredicate1(ref y, ref z, ref number) || MRpredicate2(ref y, ref number, ref z, w));
+                //test
+                ris = (BigInteger.GreatestCommonDivisor(y, number) == 1) &&
+                      (MRpredicate1(ref y, ref z, ref number) || MRpredicate2(ref y, ref number, ref z, w));
                 i++;
             }
             return ris;
@@ -110,7 +92,7 @@ namespace ZK_Fiat_Shamir
         {
             z = number - 1;
             w = 0;
-            while ((z&1) == 0)
+            while ((z & 1) == 0)
             {
                 w++;
                 z >>= 1;
@@ -125,84 +107,157 @@ namespace ZK_Fiat_Shamir
         /// <returns>true if number is prime</returns>
         public bool IsPrime(ref BigInteger number)
         {
-            return number >= 2 && MRtest(ref number);
+            return (number == 2) || (number > 2 && MRtest(ref number));
         }
 
         /// <summary>
-        /// Return the first number following the argument.
+        /// Return the first prime number following the argument.
         /// </summary>
         /// <param name="number">current number</param>
         /// <returns>next prime number</returns>
         public BigInteger NextPrime(BigInteger number)
         {
+            if (number < 2)
+                return 2;
             if ((number & 1) == 0)
                 number++;
 
-            while (!MRtest(ref number ))//test primality
+            while (!MRtest(ref number)) //test primality
             {
                 number += 2;
             }
 
-            _current = number;
             return number;
         }
 
         /// <summary>
-        /// Return the first number following that retrieved the last time.
+        /// Version to use with threads.
+        /// On termination current contains next prime number.
         /// </summary>
-        /// <returns>next prime number</returns>
-        public BigInteger NextPrime()
+        /// <param name="current">container of current number</param>
+        public void NextPrime(Container current)
         {
-            _current += 2;
-            while (!MRtest(ref _current))//test primality
+            if (current.Content < 2)
             {
-                _current += 2;
+                current.Content = 2;
+                return;
+            }
+            var number = current.Content;
+            if ((number & 1) == 0)
+                number++;
+
+            while (!MRtest(ref number)) //test primality
+            {
+                number += 2;
             }
 
-            return _current;
+            current.Content = number;
         }
-
 
         /// <summary>
-        /// Generates a prime number.
+        /// Return the first prime number following the argument.
+        /// Multithread version.
+        /// Now supports only 2 threads
         /// </summary>
-        /// <returns>Random prime number.</returns>
-        public BigInteger GetPrime()
+        /// <param name="number">current number</param>
+        /// <param name="threads">number of threads to use</param>
+        /// <returns>next prime number</returns>
+        public BigInteger ParallelNextPrime(BigInteger number, int threads = 2)
         {
-            _generator.GetBytes(_buffer);
-            _buffer[_buffer.Length - 1] &= 127;
-            BigInteger p = new BigInteger(_buffer);
-            if ((p & 1) == 0)
-                p++;
+            if (number < 2)
+                return 2;
+            if (threads < 2)
+                return NextPrime(number);
 
-            while (!MRtest(ref p))//test primality
+            if ((number & 1) == 0)
+                number++;
+
+            var wait = new WaitHandle[]
             {
-                p = p + 2;
+                new AutoResetEvent(false), new AutoResetEvent(false)
+            };
+            var result1 = new Container(number);
+            var worker1 = new Thread(() => Routine(result1, wait[0]));
+            worker1.Start();
+            var result2 = new Container(number+2);
+            var worker2 = new Thread(new ThreadStart(() => Routine(result2, wait[1])));////////////////////
+            worker2.Start();
+
+            var index =  WaitHandle.WaitAny(wait);
+            if (index == 0)
+            {
+                worker2.Abort();
+                return result1.Content;
+            }
+            else
+            {
+                worker1.Abort();
+                return result2.Content;
             }
 
-            _current = p;
-            return p;
         }
 
-        //IDisposable pattern implementation
-        public void Dispose()
+        /// <summary>
+        /// Version to use with threads.
+        /// On termination current contains next prime number.
+        /// Multithread version.
+        /// Now supports only 2 threads.
+        /// </summary>
+        /// <param name="current">container of current number</param>
+        /// <param name="threads">number of threads to use</param>
+        public void ParallelNextPrime(Container current, int threads = 2)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
+            if (current.Content < 2)
+            {
+                current.Content = 2;
                 return;
+            }
+            if (threads < 2)
+                NextPrime(current);
 
-            if (disposing)
+            var number = current.Content;
+            if ((number & 1) == 0)
+                number++;
+            var wait = new WaitHandle[]
             {
-                _generator.Dispose();
+                new AutoResetEvent(false), new AutoResetEvent(false)
+            };
+            var result1 = new Container(number);
+            var worker1 = new Thread(new ThreadStart(() => Routine(result1, wait[0])));
+            worker1.Start();
+            var result2 = new Container(number + 2);
+            var worker2 = new Thread(new ThreadStart(() => Routine(result2, wait[1])));
+            worker2.Start();
+
+            var index = WaitHandle.WaitAny(wait);
+            if (index == 0)
+            {
+                worker2.Abort();
+                current.Content = result1.Content;
+            }
+            else
+            {
+                worker1.Abort();
+                current.Content = result2.Content;
             }
 
-            _disposed = true;
         }
-    }
 
+        //thread's routine
+        private void Routine(Container number, WaitHandle wait)
+        {
+            var seed = number.Content;
+            try
+            {
+                while (!MRtest(ref seed))
+                    seed += 4;
+                number.Content = seed;
+               ((AutoResetEvent) wait).Set();
+            }
+            catch (ThreadAbortException)
+            {
+                Thread.ResetAbort();
+            }
+        }
+}
 }

@@ -17,7 +17,7 @@ Random Number Generator
 
 Random Number Generator included in C++ version is only for testing, user can replace it subclassing ZKFS::Aux::Generator
 
-The C# version using .NET service for cryptografy, user can customize these services
+The C# version using .NET RandomNumberGenerator abstract class.
 
 
 Usage:

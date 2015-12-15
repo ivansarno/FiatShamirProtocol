@@ -13,6 +13,8 @@ Library includes:
 
 -Verifier class
 
+-Support for multithreading
+
 Random Number Generator
 
 Random Number Generator included in C++ version is only for testing, user can replace it subclassing ZKFS::Aux::Generator

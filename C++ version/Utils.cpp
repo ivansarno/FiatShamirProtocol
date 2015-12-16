@@ -199,5 +199,7 @@ BigInteger Utils::byte2biginteger(uint8_t *byte, unsigned int size)
     mpz_t z;
     mpz_init(z);
     mpz_import(z, size, 1, sizeof(byte[0]), 0, 0, byte);
-    return BigInteger(z);
+    auto res = BigInteger(z);
+    mpz_clear(z);
+    return res;
 }

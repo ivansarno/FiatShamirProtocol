@@ -1,9 +1,11 @@
-﻿//version V.2.0
+﻿//version V.2.1
 
 using System;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 
 namespace ZK_Fiat_Shamir
@@ -19,13 +21,11 @@ namespace ZK_Fiat_Shamir
         private BigInteger _privkey;
         private uint _keySize;
 
-		//check safety of selected prime numbers
-        private static bool Prime_check(ref BigInteger q, ref BigInteger p, ulong distance) 
+        //check safety of selected prime numbers
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool PrimeCheck(ref BigInteger q, ref BigInteger p, ulong distance) 
         {
-            BigInteger dif = (p - q);
-            dif = BigInteger.Abs(dif);
-            
-            return (dif > distance);
+            return BigInteger.Abs(p-q) > distance;
         }
 
 
@@ -44,16 +44,17 @@ namespace ZK_Fiat_Shamir
 
             var genwrap = new GeneratorWrap(gen, wordSize/2);
             _keySize = wordSize;
-            Prime generator = new Prime(genwrap.GetInt(), precision, wordSize / 2);
+            SeqPrime generator = new SeqPrime(genwrap.GetInt(), precision, wordSize / 2);
             BigInteger primeP = generator.NextPrime(genwrap.GetBig());
             BigInteger primeQ = generator.NextPrime(genwrap.GetBig());
 
-            while (!Prime_check(ref primeQ, ref primeP, distance)) //check safety of selected prime numbers
+            while (!PrimeCheck(ref primeQ, ref primeP, distance)) //check safety of selected prime numbers
              {
                  primeQ = generator.NextPrime(genwrap.GetBig());
              }
 
             genwrap = new GeneratorWrap(gen, wordSize);
+            //key creation
             Creation(ref primeP, ref primeQ, genwrap);
         }
 
@@ -66,6 +67,7 @@ namespace ZK_Fiat_Shamir
         public uint KeySize => _keySize;
 
         //Creates the keys
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Creation(ref BigInteger primeP, ref BigInteger primeQ, GeneratorWrap gen)
         {
             _module = primeP * primeQ;
@@ -77,8 +79,7 @@ namespace ZK_Fiat_Shamir
 
         /// <summary>
         /// Generates the keys.
-        /// Mutltithread version.
-        /// Now support 2 threads only.
+        /// Multithread version.
         /// </summary>
         /// <param name="gen">random number generator, it is not disposed.</param>
         /// <param name="wordSize">key size in bytes</param>
@@ -88,69 +89,53 @@ namespace ZK_Fiat_Shamir
         public void ParallelKeyCreate(RandomNumberGenerator gen, uint wordSize = 128, ulong distance = uint.MaxValue,
             uint precision = 20, int threads = 4)
         {
+           if(threads < 2)
+                KeyCreate(gen, wordSize, distance, precision);
+
             if (precision < 1 || wordSize < 8 || gen == null)
                 throw new ArgumentException("precision < 1 or wordSize < 8 or gen == null");
-            
-            if(threads < 2)
-                KeyCreate(gen, wordSize, distance, precision);
-                
+
             _keySize = wordSize;
-            var genwrap = new GeneratorWrap(gen, wordSize/2);
-        
-            BigInteger primeP, primeQ;
-            
-            if(threads < 4)
-                DualRoutine(precision, wordSize, genwrap, distance, out primeP, out primeQ);
+            var genwrap = new GeneratorWrap(gen, wordSize/2);//generator half size
+            IPrime mainGenerator, workerGenerator;
+
+            //threads' distribution for primes creation 
+            if (threads < 4)
+            {
+                mainGenerator = new SeqPrime(genwrap.GetInt(), precision, wordSize/2);
+                workerGenerator = new SeqPrime(genwrap.GetInt(), precision, wordSize/2);
+            }
             else
-                ParallelRoutine(precision, wordSize, genwrap, threads, distance, out primeP, out primeQ);
+            {
+                mainGenerator = new ParPrime(genwrap.GetInt(), precision, wordSize/2, threads-threads/2);
+                workerGenerator = new ParPrime(genwrap.GetInt(), precision, wordSize / 2, threads/2);
+            }
 
+            //primes creation
+            var number = genwrap.GetBig();
+            Task<BigInteger> worker = new Task<BigInteger>(workerGenerator.NextPrime, number);
+            worker.Start();
+            var primeP = mainGenerator.NextPrime(genwrap.GetBig());
+
+            worker.Wait();
+            var primeQ = worker.Result;
+            worker.Dispose();
+
+            // prime numbers security check
+            if (!PrimeCheck(ref primeP, ref primeQ, distance))
+            {
+                //use all threads
+                mainGenerator = new ParPrime(genwrap.GetInt(), precision, wordSize / 2, threads);
+                do
+                {
+                    primeQ = mainGenerator.NextPrime(genwrap.GetBig());
+                } while (!PrimeCheck(ref primeQ, ref primeP, distance)); // prime numbers security check
+            }
+
+            //generator full size
             genwrap = new GeneratorWrap(gen, wordSize);
+            //key creation
             Creation(ref primeP, ref primeQ, genwrap);
-        }
-        
-        //routine for 2 threads.
-        private static void DualRoutine(uint precision, uint wordSize, GeneratorWrap gen, ulong distance, out BigInteger primeP, out BigInteger primeQ)
-        {
-            var number = gen.GetBig();
-            var container = new Container(number);
-            var seeker = new Prime(gen.GetInt(), precision, wordSize/2);
-            Thread worker = new Thread(() => seeker.NextPrime(container));
-            worker.Start();
-
-            var generator = new Prime(gen.GetInt(), precision, wordSize/2);
-            number = gen.GetBig();
-            primeP = generator.NextPrime(number);
-            
-            worker.Join();
-            primeQ = container.Content;
-
-            while (!Prime_check(ref primeQ, ref primeP, distance)) // prime numbers security check
-            {
-                primeQ = generator.ParallelNextPrime(gen.GetBig());
-            }
-        }
-        
-        //routine for threads > 2
-        private static void ParallelRoutine(uint precision, uint wordSize, GeneratorWrap gen, int threads, ulong distance, out BigInteger primeP, out BigInteger primeQ)
-        {
-
-            var number = gen.GetBig();
-            var container = new Container(number);
-            var seeker = new Prime(gen.GetInt(), precision, wordSize / 2);
-            Thread worker = new Thread(() => seeker.ParallelNextPrime(container, threads/2));
-            worker.Start();
-
-            var generator = new Prime(gen.GetInt(), precision, wordSize / 2);
-            number = gen.GetBig();
-            primeP = generator.ParallelNextPrime(number, threads/2);
-
-            worker.Join();
-            primeQ = container.Content;
-
-            while (!Prime_check(ref primeQ, ref primeP, distance)) //check safety of selected prime numbers
-            {
-                primeQ = generator.ParallelNextPrime(gen.GetBig(), threads);
-            }
         }
     }
 }

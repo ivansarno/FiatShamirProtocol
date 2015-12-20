@@ -21,6 +21,7 @@ namespace ZK_Fiat_Shamir
         private BigInteger _current;
         private readonly AutoResetEvent _wait;
         private readonly int _threads;
+        private int _pass;
 
         /// <summary>
         ///  </summary>
@@ -131,6 +132,7 @@ namespace ZK_Fiat_Shamir
                 number++;
             _current = number;
             _continue = true;
+            _pass = 1;
 
             for (int i = 0; i < _threads; i++)
             {
@@ -156,6 +158,7 @@ namespace ZK_Fiat_Shamir
                 number++;
             _current = number;
             _continue = true;
+            _pass = 1;
 
             for (int i = 0; i < _threads; i++)
             {
@@ -177,13 +180,11 @@ namespace ZK_Fiat_Shamir
             while (_continue && !MRtest(ref number, buffer))
                 number += increment;
 
-            if(_continue)
-            {
-                _continue = false;
-                _current = number;
-                _wait.Set();
-            }
-            
+            var pass = Interlocked.CompareExchange(ref _pass, 0, 1);
+            if (pass == 0) return;
+            _continue = false;
+            _current = number;
+            _wait.Set();
         }
     }
 }

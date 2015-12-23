@@ -1,11 +1,12 @@
 //
 //  Test.cpp
-//  ZK
+//  Zero Knowledge Fiat-Shamir Protocol
 //
-//  Created by ivan sarno on 22/10/15.
-//  Copyright © 2015 ivan sarno. All rights reserved.
+//  Created by ivan sarno on 24/08/15.
+//  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.5
+//version V.3.6
+
 
 #include "Test.h"
 #include "ZK-Fiat-Shamir.h"
@@ -29,14 +30,14 @@ bool Test::DefaultTest(unsigned int size, unsigned int test_precision)
     bool ran;
     BigInteger com;
     bool result = true;
-    Utils::Generator gen;
+    Utils::TestGenerator gen;
     BigInteger priv, pub, modulus;
-    KeyGen(pub, priv, modulus, gen, size);
+    KeyGen(pub, priv, modulus, &gen, size);
     
     //test with key
     {
         Verifier V(pub, modulus);
-        Proover P(priv, modulus, size);
+        Proover P(priv, modulus, size, &gen);
         
         while(iteration < test_precision && result)
         {
@@ -60,7 +61,8 @@ bool Test::DefaultTest(unsigned int size, unsigned int test_precision)
     
     {
         Verifier V1(pub, modulus);
-        Proover P1(gen.get(size), modulus, size);
+        BigInteger false_key = priv-(priv/3);
+        Proover P1(false_key, modulus, size, &gen);
         
         
         while(iteration < test_precision && result)
@@ -85,7 +87,7 @@ bool Test::DefaultTest(unsigned int size, unsigned int test_precision)
 }
 
 //version with full KeyGen parameters
-bool Test::CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Generator generator, unsigned int prime_distance)
+bool Test::CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Generator *generator, unsigned int prime_distance)
 {
     if(size < 64 || test_precision < 1)
     {
@@ -104,7 +106,7 @@ bool Test::CustomTest(unsigned int size, unsigned int test_precision, unsigned i
     //test with key
     {
         Verifier V(pub, modulus);
-        Proover P(priv, modulus, size);
+        Proover P(priv, modulus, size, generator);
         
         while(iteration < test_precision && result)
         {
@@ -128,7 +130,8 @@ bool Test::CustomTest(unsigned int size, unsigned int test_precision, unsigned i
     
     {
         Verifier V1(pub, modulus);
-        Proover P1(generator.get(size), modulus, size);
+        BigInteger false_key = priv-(priv/3);
+        Proover P1(false_key, modulus, size, generator);
         
         
         while(iteration < test_precision && result)

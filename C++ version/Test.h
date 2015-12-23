@@ -1,11 +1,12 @@
 //
 //  Test.hpp
-//  ZK
+//  Zero Knowledge Fiat-Shamir Protocol
 //
-//  Created by ivan sarno on 22/10/15.
-//  Copyright © 2015 ivan sarno. All rights reserved.
+//  Created by ivan sarno on 24/08/15.
+//  Copyright (c) 2015 ivan sarno. All rights reserved.
 //
-//version V.3.5
+//version V.3.6
+
 
 #ifndef Test_hpp
 #define Test_hpp
@@ -23,7 +24,7 @@ namespace ZKFS
         bool DefaultTest(unsigned int size = 1024, unsigned int test_precision = 20);
         
         //version with full KeyGen parameters
-        bool CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Utils::Generator generator, unsigned int prime_distance = UINT32_MAX);
+        bool CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Utils::Generator *generator, unsigned int prime_distance = UINT32_MAX);
     }
 }
 

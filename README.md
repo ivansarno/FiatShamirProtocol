@@ -1,25 +1,24 @@
 # Fiat-Shamir_ZK-Protocol
 OOP Fiat-Shamir Zero Knowledge Protocol implementation
 
-2 version are avaiables, C++ and C#
+
 
 Library includes:
 
--the fun KeyGen for keys generation(C++)
+-the fun KeyGen for keys generation
 
--KeyGen class(C#)
+-KeyGen class
 
 -Proover class
 
 -Verifier class
 
--Support for multithreading
 
 Random Number Generator
 
-Random Number Generator included in C++ version is only for testing, user can replace it subclassing ZKFS::Aux::Generator
+Random Number Generator included  is only for testing, user can replace it subclassing ZKFS::Aux::Generator
 
-The C# version using .NET RandomNumberGenerator abstract class.
+
 
 
 Usage:
@@ -33,13 +32,13 @@ Usage:
 -run a session of FS exchanging the result of methods for N iteration, with N is the precision you like:
 
   -Client: Proover.step1 -> Server
-  
+
   -Server: Verifier.step1 -> Client
-  
+
   -Client: Proover.step2 -> Server
-  
+
   -Server: Verifier.step2 -> result of identification
-  
+
   -in alternative (Server: Verifier.checkstate -> result of identification)
 
 Credit

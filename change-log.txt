@@ -1,0 +1,35 @@
+Version 4.0
+
+1) Parallel key creation
+2) Performance improvement
+3) Redesign of some features
+
+AAA Verision not backward compatible
+
+Version 3.6
+
+1) Random Number Generator Improvement
+2) Redefinition of Generator class
+3) Redesign of some features
+
+AAA Verision not backward compatible
+
+Version 3.5
+
+1) 1/3 of memory usage
+2) 20% more speed
+3) various fixes
+
+Version 3.2
+
+1) Rename Aux in Utils (because Windows can’t save file named aux)
+2) replace test with 2 more flexible versions
+
+Version 3.1
+
+1) performance improvement: 50% more speed, 30% less memory usage
+2) improve documentation
+3) add Test namespace for automatic test
+4) replace random number generator
+5) improve safety
+6) error reporting in keygen function

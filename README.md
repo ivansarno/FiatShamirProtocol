@@ -1,6 +1,8 @@
 # FiatShamirProtocol
 C++ OOP Fiat-Shamir Zero Knowledge Protocol implementation
 
+**This project will no longer be updated**
+
 Library includes:
 
 	-KeyGen function

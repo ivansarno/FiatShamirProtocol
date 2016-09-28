@@ -17,7 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.4.0
+//version V.4.1
 
 #include "FiatShamirProtocol.h"
 
@@ -32,11 +32,13 @@ Proover::Proover(BigInteger &privkey, BigInteger &modulus, unsigned int size, Ut
     this->modulus = modulus;
     this->size = size;
     gen = generator;
+    synch = false;
 }
 
 BigInteger Proover::step1()
 {
     session_number = gen->getBig(size) % modulus;
+    synch = true;
     
     while(session_number < 2)//avoid comunication of the key
         session_number = (session_number + 2) % modulus;
@@ -44,8 +46,11 @@ BigInteger Proover::step1()
     return (session_number * session_number) % modulus;
 }
 
+
 BigInteger Proover::step2(bool choice)
 {
+    if(!synch)
+        return 0; //0 is an error
     if(choice)
         return (session_number * key) % modulus;
     return session_number;
@@ -57,19 +62,31 @@ Verifier::Verifier(BigInteger &pubkey, BigInteger &modulus)
     this->modulus = modulus;
     state = false;
     srand((unsigned int)time(NULL));//init generator
+    synch = false;
 }
 
 bool Verifier::step1(BigInteger &session_number) //take result of Proover step1
 {
-    if(session_number == 0) //avoid attack
+    if(session_number < 2) //avoid attack
+    {
         this->session_number=1;
+        return false;
+    }
     this->session_number=session_number;
+    synch = true;
+    state = false;
     choice=(rand() % 2) == 1;
     return choice;
 }
 
 bool Verifier::step2(BigInteger proof) //take retult of Proover step2 and change the state
 {
+    if(!synch)
+    {
+        state = false;
+        return false;
+    }
+    synch = false;
     proof = (proof*proof) % modulus;
     
     BigInteger y;
@@ -122,7 +139,7 @@ bool FiatShamirProtocol::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInte
 inline void DualRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator *gen, unsigned int size, unsigned int precision, unsigned long distance)
 {
     primeP = gen->getBig(size/2);
-    auto worker = std::thread(TNextPrime, &primeP, size/2, precision);
+    auto worker = std::thread(ThreadsNextPrime, &primeP, size/2, precision);
     primeQ = Prime::NextPrime(gen->getBig(size/2), size/2, precision);
     worker.join();
     
@@ -130,7 +147,7 @@ inline void DualRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator
     while(!prime_check(primeP, primeQ, distance))
     {
         primeQ = gen->getBig(size/2);
-        Prime::PNextPrime(&primeQ, size/2, precision);
+        Prime::ParallelNextPrime(&primeQ, size/2, precision);
     }
 }
 
@@ -138,16 +155,16 @@ inline void DualRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator
 inline void ParallelRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator *gen, unsigned int size, unsigned int precision, unsigned long distance, int threads)
 {
     primeP = gen->getBig(size/2);
-    auto worker = std::thread(PNextPrime, &primeP, size/2, precision, threads/2);
+    auto worker = std::thread(ParallelNextPrime, &primeP, size/2, precision, threads/2);
     primeQ = gen->getBig(size/2);
-    Prime::PNextPrime(&primeQ, size/2, precision, (threads-threads/2));
+    Prime::ParallelNextPrime(&primeQ, size/2, precision, (threads-threads/2));
     worker.join();
     
     
     while(!prime_check(primeP, primeQ, distance))
     {
         primeQ = gen->getBig(size/2);
-        Prime::PNextPrime(&primeQ, size/2, precision, threads);
+        Prime::ParallelNextPrime(&primeQ, size/2, precision, threads);
     }
 }
 

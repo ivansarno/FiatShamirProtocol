@@ -17,7 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.4.0
+//version V.4.1
 
 #pragma once
 #include <stdio.h>
@@ -37,16 +37,18 @@ namespace FiatShamirProtocol
         BigInteger session_number;
         Utils::Generator *gen;
         int size;
+        bool synch;
         
     public:
         //size = number of bit of modulus
-        //generator = random number generator, use an your own implementation of abstract class Generator or my TestGenerator only for test
-        Proover(BigInteger &privkey, BigInteger &modulus, unsigned int size, Utils::Generator *generator);// subclass of my class for random number generator
+        //generator = random number generator, use an your own implementation of the abstract class Generator or my TestGenerator only for test
+        Proover(BigInteger &privkey, BigInteger &modulus, unsigned int size, Utils::Generator *generator);
         
         //Start the protocol and return the session number to send to Verifier
         BigInteger step1();
         
         //Take result of verifier step1, a random bool, ad return the proof to send to Verifier
+        //return 0 if an error is occurred
         BigInteger step2(bool choice);
         
     };
@@ -59,6 +61,7 @@ namespace FiatShamirProtocol
         BigInteger modulus;
         BigInteger session_number;
         bool state;
+        bool synch;
         
     public:
         Verifier(BigInteger &pubkey, BigInteger &modulus);

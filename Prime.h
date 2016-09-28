@@ -17,7 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.4.0
+//version V.4.1
 
 #pragma once
 #include <gmpxx.h>
@@ -49,16 +49,16 @@ namespace FiatShamirProtocol
         //precision = error of Miller-Rabin test = 1/2^(2* precision)
         //seed = seed for random number generator
         //current contains the next prime
-        void TNextPrime(BigInteger *current, unsigned int size, unsigned int precision = 20);
+        void ThreadsNextPrime(BigInteger *current, unsigned int size, unsigned int precision = 20);
         
-        //multithread version of TNextPrime
+        //multithread version of ThreadsNextPrime
         //gen = random number generator
         //size = number of  bit of prime generated
         //precision = error of Miller-Rabin test = 1/2^(2* precision)
         //seed = seed for random number generator
         //threads = number of threads to use
         //current contains the next prime
-        void PNextPrime(BigInteger *current, unsigned int size, unsigned int precision = 20, int threads = 2);
+        void ParallelNextPrime(BigInteger *current, unsigned int size, unsigned int precision = 20, int threads = 2);
 
     }
 }

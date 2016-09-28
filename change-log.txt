@@ -1,10 +1,14 @@
+Version 4.1
+1) security improvements
+2) fixes
+
 Version 4.0
 
 1) Parallel key creation
 2) Performance improvement
 3) Redesign of some features
 
-AAA Verision not backward compatible
+AAA Version not backward compatible
 
 Version 3.6
 
@@ -12,7 +16,7 @@ Version 3.6
 2) Redefinition of Generator class
 3) Redesign of some features
 
-AAA Verision not backward compatible
+AAA Version not backward compatible
 
 Version 3.5
 

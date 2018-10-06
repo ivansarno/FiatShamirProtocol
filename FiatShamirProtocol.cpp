@@ -17,33 +17,21 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.4.1
+//version V.5.0
 
-#include "FiatShamirProtocol.h"
+#include "FiatShamirProtocol.hpp"
 
 using namespace FiatShamirProtocol;
 
-
-
-
-Proover::Proover(BigInteger &privkey, BigInteger &modulus, unsigned int size, Utils::Generator *generator)
-{
-    key = privkey;
-    this->modulus = modulus;
-    this->size = size;
-    gen = generator;
-    synch = false;
-}
-
 BigInteger Proover::step1()
 {
-    session_number = gen->getBig(size) % modulus;
+    sessionNumber = mod(generator.getBig(size), modulus);
     synch = true;
     
-    while(session_number < 2)//avoid comunication of the key
-        session_number = (session_number + 2) % modulus;
+    while(bitSize(sessionNumber) < size/8)//avoid communication of the key
+        sessionNumber = mod(generator.getBig(size), modulus);
     
-    return (session_number * session_number) % modulus;
+    return mod(sessionNumber * sessionNumber, modulus);
 }
 
 
@@ -52,34 +40,28 @@ BigInteger Proover::step2(bool choice)
     if(!synch)
         return 0; //0 is an error
     if(choice)
-        return (session_number * key) % modulus;
-    return session_number;
+        return mod(sessionNumber * key, modulus);
+    return sessionNumber;
 }
 
-Verifier::Verifier(BigInteger &pubkey, BigInteger &modulus)
-{
-    key = pubkey;
-    this->modulus = modulus;
-    state = false;
-    srand((unsigned int)time(NULL));//init generator
-    synch = false;
-}
+Proover::Proover(const BigInteger &privkey, const BigInteger &modulus, Generator &generator): key(privkey), modulus(modulus),
+    generator(generator), size(bitSize(modulus)) {}
 
-bool Verifier::step1(BigInteger &session_number) //take result of Proover step1
+bool Verifier::step1(BigInteger &sessionNumber) //take result of Proover step1
 {
-    if(session_number < 2) //avoid attack
+    if(sessionNumber < 2) //avoid attack
     {
-        this->session_number=1;
+        this->sessionNumber=1;
         return false;
     }
-    this->session_number=session_number;
+    this->sessionNumber = sessionNumber;
     synch = true;
     state = false;
-    choice=(rand() % 2) == 1;
+    choice=generator.getBit();
     return choice;
 }
 
-bool Verifier::step2(BigInteger proof) //take retult of Proover step2 and change the state
+bool Verifier::step2(BigInteger proof) //take result of Proover step2 and change the state
 {
     if(!synch)
     {
@@ -87,13 +69,13 @@ bool Verifier::step2(BigInteger proof) //take retult of Proover step2 and change
         return false;
     }
     synch = false;
-    proof = (proof*proof) % modulus;
+    proof = mod(proof*proof, modulus);
     
     BigInteger y;
     
     if (choice)
-        y = (session_number * key) % modulus;
-    else y= session_number;
+        y = mod(sessionNumber * key, modulus);
+    else y = sessionNumber;
     
     state = proof==y;
     
@@ -105,86 +87,151 @@ bool Verifier::checkstate() //return state of identification
     return state;
 }
 
-//check security standard conformance
-inline bool prime_check(const BigInteger &Q, const BigInteger &P, unsigned long distance)
+Verifier::Verifier(const BigInteger &pubkey, const BigInteger &modulus, Generator &generator): key(pubkey), modulus(modulus),
+generator(generator) {}
+
+
+PrivateKey::PrivateKey(const BigInteger &key, const BigInteger &modulus) : key(key), modulus(modulus) {}
+
+bool PrivateKey::operator==(const PrivateKey &rhs) const
 {
-    BigInteger dif = abs(P-Q);
-    return dif > distance;
+    return key == rhs.key &&
+           modulus == rhs.modulus;
 }
 
-bool FiatShamirProtocol::KeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Utils::Generator *gen, unsigned int size, unsigned int precision, unsigned long distance)
+bool PrivateKey::operator!=(const PrivateKey &rhs) const
 {
-    if(size < 64 || precision < 1)
-        return false;
-    
-    
-    BigInteger primeP = Prime::NextPrime(gen->getBig(size/2), size/2, precision);
-    BigInteger primeQ = Prime::NextPrime(gen->getBig(size/2), size/2, precision);
-    
-    
-    while(!prime_check(primeP, primeQ, distance))
+    return !(rhs == *this);
+}
+
+Proover PrivateKey::getProover(Generator &generator) const
+{
+    return Proover(key, modulus, generator);
+}
+
+PublicKey PrivateKey::getPublicKey()
+{
+    return PublicKey(mod(key*key, modulus), modulus);
+}
+
+Buffer PrivateKey::toBytes() const
+{
+    auto buffer = Buffer();
+    buffer.reserve(bitSize(key)/8);
+    bigIntegerToBytes(key, buffer);
+    bigIntegerToBytes(modulus, buffer);
+    return buffer;
+}
+
+std::optional<PrivateKey> PrivateKey::fromBytes(const Buffer &data)
+{
+    size_t index = 0;
+    BigInteger key = bigIntegerFromBytes(data, index);
+    if(key < 0)
+        return std::optional<PrivateKey>();
+    BigInteger modulus = bigIntegerFromBytes(data, index);
+    if(modulus < 0)
+        return std::optional<PrivateKey>();
+    return PrivateKey(key, modulus);
+}
+
+std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size)
+{
+    auto secretSize = bitSize(secretNumber);
+    if(size < 512 || size < secretSize || secretSize < size/4)
+        return std::optional<PrivateKey>();
+
+
+    BigInteger primeP = generator.getBig(size/2);
+    while(bitSize(primeP) < size/4)
+        primeP = generator.getBig(size/2);
+    BigInteger primeQ = generator.getBig(size/2);
+    while(bitSize(primeQ) < size/4)
+        primeQ = generator.getBig(size/2);
+    primeQ = nextPrime(primeQ);
+    primeP = nextPrime(primeP);
+
+
+    while(bitSize(abs(primeP-primeQ)) < 32)
     {
-        primeQ = Prime::NextPrime(gen->getBig(size/2), size/2, precision);
+        while(bitSize(primeQ) < size/4)
+            primeQ = generator.getBig(size/2);
+        primeQ = nextPrime(primeQ);
     }
-    
-    
-    modulus = primeP * primeQ;
-    privkey = gen->getBig(size) % modulus;
-    pubkey = (privkey * privkey) % modulus;
-    
-    return true;
+
+
+    BigInteger modulus = primeP * primeQ;
+
+    return PrivateKey(secretNumber, modulus);
 }
 
-//prime extraction routine for 2 threads
-inline void DualRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator *gen, unsigned int size, unsigned int precision, unsigned long distance)
+PrivateKey PrivateKey::keyGen(Generator &generator, unsigned size)
 {
-    primeP = gen->getBig(size/2);
-    auto worker = std::thread(ThreadsNextPrime, &primeP, size/2, precision);
-    primeQ = Prime::NextPrime(gen->getBig(size/2), size/2, precision);
-    worker.join();
-    
-    
-    while(!prime_check(primeP, primeQ, distance))
-    {
-        primeQ = gen->getBig(size/2);
-        Prime::ParallelNextPrime(&primeQ, size/2, precision);
-    }
+    if(size < 512)
+        size = 512;
+
+
+    BigInteger primeP = generator.getBig(size/2);
+    while(bitSize(primeP) < size/4)
+        primeP = generator.getBig(size/2);
+    BigInteger primeQ = generator.getBig(size/2);
+    while(bitSize(primeQ) < size/4)
+        primeQ = generator.getBig(size/2);
+    primeQ = nextPrime(primeQ);
+    primeP = nextPrime(primeP);
+
+
+    BigInteger modulus = primeP * primeQ;
+    BigInteger key = mod(generator.getBig(size), modulus);
+    while(bitSize(key) < size/4)
+        key = mod(generator.getBig(size), modulus);
+    return PrivateKey(key, modulus);
 }
 
-//multithread prime extraction routine
-inline void ParallelRoutine(BigInteger &primeP, BigInteger &primeQ, Utils::Generator *gen, unsigned int size, unsigned int precision, unsigned long distance, int threads)
+PublicKey::PublicKey(const BigInteger &key, const BigInteger &modulus) : key(key), modulus(modulus) {}
+
+bool PublicKey::operator==(const PublicKey &rhs) const
 {
-    primeP = gen->getBig(size/2);
-    auto worker = std::thread(ParallelNextPrime, &primeP, size/2, precision, threads/2);
-    primeQ = gen->getBig(size/2);
-    Prime::ParallelNextPrime(&primeQ, size/2, precision, (threads-threads/2));
-    worker.join();
-    
-    
-    while(!prime_check(primeP, primeQ, distance))
-    {
-        primeQ = gen->getBig(size/2);
-        Prime::ParallelNextPrime(&primeQ, size/2, precision, threads);
-    }
+    return key == rhs.key &&
+           modulus == rhs.modulus;
 }
 
-bool FiatShamirProtocol::ParallelKeyGen(BigInteger &pubkey, BigInteger &privkey, BigInteger &modulus, Utils::Generator *gen, unsigned int size, int threads, unsigned int precision, unsigned long distance)
+bool PublicKey::operator!=(const PublicKey &rhs) const
 {
-    if(threads < 2)
-        return KeyGen(pubkey, privkey, modulus, gen, size, precision, distance);
-    if(size < 64 || precision < 2)
-        return false;
-    
-    BigInteger primeP, primeQ;
-    
-    if(threads < 4)
-        DualRoutine(primeP, primeQ, gen, size, precision, distance);
-    else ParallelRoutine(primeP, primeQ, gen, size, precision, distance, threads);
-    
-    
-    modulus = primeP * primeQ;
-    privkey = gen->getBig(size) % modulus;
-    pubkey = (privkey * privkey) % modulus;
-    
-    return true;
+    return !(rhs == *this);
 }
+
+Buffer PublicKey::toBytes() const
+{
+    auto buffer = Buffer();
+    buffer.reserve(bitSize(key));
+    bigIntegerToBytes(key, buffer);
+    bigIntegerToBytes(modulus, buffer);
+    return buffer;
+}
+
+std::optional<PublicKey> PublicKey::fromBytes(const Buffer &data)
+{
+    size_t index = 0;
+    BigInteger key = bigIntegerFromBytes(data, index);
+    if(key < 0)
+        return std::optional<PublicKey>();
+    BigInteger modulus = bigIntegerFromBytes(data, index);
+    if(modulus < 0)
+        return std::optional<PublicKey>();
+    return PublicKey(key, modulus);
+}
+
+Verifier PublicKey::getVerifier(Generator &generator) const
+{
+    return Verifier(key, modulus, generator);
+}
+
+std::optional<PrivateKey> PublicKey::restorePrivateKey(const BigInteger &secretNumber)
+{
+    if(mod(secretNumber*secretNumber, modulus) == key)
+        return PrivateKey(secretNumber, modulus);
+    return std::optional<PrivateKey>();
+}
+
+

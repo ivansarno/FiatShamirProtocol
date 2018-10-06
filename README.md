@@ -1,24 +1,24 @@
 # FiatShamirProtocol
 C++ OOP Fiat-Shamir Zero Knowledge Protocol implementation
 
-**This project will no longer be updated**
-
 Library includes:
 
-	-KeyGen function
-	-ParallelKeyGen function
+	-keyGen function
+	-PrivateKey class
+	-PublicKey calss
 	-Proover class
 	-Verifier class
+	-Makefile with Test and Library targets
 
 **Random Number Generator**
 
-Random Number Generator included is only for testing, user can replace it subclassing FiatShamirProtocol::Utils::Generator 
+Random Number Generator included is only for testing, user can replace it subclassing FiatShamirProtocol::Generator 
 
 **Usage:**
 
-	a)the client create the keys with KeyGen or ParallelKeyGen
-	b)the client instantiates a Proover object with the private key
-	c)the server instantiates a Verifier object with the public key of client
+	a)the client create the keys with PrivateKey::keyGen
+	b)the client instantiates a Proover object from the private key
+	c)the server instantiates a Verifier object from the public key of client
 	d)run a session of the protocol exchanging the result of methods for N iteration, with N is the precision you like:
 
       1)Client: Proover.step1 -> Server
@@ -29,5 +29,5 @@ Random Number Generator included is only for testing, user can replace it subcla
     
     
 **Dependencies**
-
+C++17
 Arbitrary Precision Library from GMP.  Link: https://gmplib.org

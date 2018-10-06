@@ -1,3 +1,9 @@
+Version 5.0
+AAA Version not backward compatible
+
+1)Total Redesign
+2) Makefile
+
 Version 4.1
 1) security improvements
 2) fixes

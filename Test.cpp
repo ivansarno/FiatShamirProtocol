@@ -16,153 +16,138 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
-*/
-//version V.4.1
+ */
+//version V.5.0
 
 
-#include "Test.h"
-#include "FiatShamirProtocol.h"
+#include "Test.hpp"
+#include "FiatShamirProtocol.hpp"
 #include <iostream>
+#include <random>
 
 using namespace FiatShamirProtocol;
-using namespace Test;
-using namespace Utils;
 
-//size: number of bit of the key
-//test_precision: number of iteration, error probability = 1/2^precision
-bool Test::DefaultTest(unsigned int size, unsigned int test_precision)
+
+//random number generator, only for test
+FiatShamirProtocol::TestGenerator::TestGenerator()
 {
-    if(size < 64 || test_precision < 1)
+    mpz_init(rand);
+    seed = rd();
+    gmp_randinit_mt(rstate);
+    gmp_randseed_ui(rstate, seed);
+}
+
+//random number generator, only for test
+FiatShamirProtocol::TestGenerator::TestGenerator(unsigned long long seed)
+{
+    mpz_init(rand);
+    this->seed = seed;
+    gmp_randinit_mt(rstate);
+    gmp_randseed_ui(rstate, this->seed);
+}
+
+FiatShamirProtocol::TestGenerator::~TestGenerator()
+{
+    mpz_clear(rand);
+    gmp_randclear(rstate);
+}
+
+BigInteger FiatShamirProtocol::TestGenerator::getBig(unsigned int size)
+{
+    mpz_urandomb(rand, rstate, size);
+    return BigInteger(rand);
+}
+
+bool TestGenerator::getBit()
+{
+    return (rd() % 2) == 0;
+};
+
+bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
+{
+    if(size < 512 || testPrecision < 2)
     {
         std::cout <<  "FiatShamirProtocol test invalid input\n";
         return false;
     }
-    
-    int iteration = 0;
-    bool ran;
-    BigInteger com;
-    bool result = true;
-    Utils::TestGenerator gen;
-    BigInteger priv, pub, modulus;
-    KeyGen(pub, priv, modulus, &gen, size);
-    
-    //test with key
+
+    auto gen = TestGenerator();
+    auto priv = PrivateKey::keyGen(gen, size);
+    auto pub = priv.getPublicKey();
+    auto prover = priv.getProover(gen);
+    auto verifier = pub.getVerifier(gen);
+    BigInteger sn = 0;
+    for(unsigned i = 0; i<testPrecision; i++)
     {
-        Verifier V(pub, modulus);
-        Proover P(priv, modulus, size, &gen);
-        
-        while(iteration < test_precision && result)
+        sn = prover.step1();
+        bool choice = verifier.step1(sn);
+        sn = prover.step2(choice);
+        if(!verifier.step2(sn))
         {
-            com = P.step1();
-            ran = V.step1(com);
-            com = P.step2(ran);
-            V.step2(com);
-            result = V.checkstate();
-            iteration++;
+            std::cout <<  "FiatShamirProtocol test ERROR\n" ;
+            return false;
+        }
+    }
+
+    auto fakeKey = PrivateKey::keyGen(gen, size);
+    if(fakeKey == priv)
+    {
+        auto fakeProover = fakeKey.getProover(gen);
+        sn = fakeProover.step1();
+        bool choice = verifier.step1(sn);
+        sn = fakeProover.step2(choice);
+        if(verifier.step1(sn))
+        {
+            std::cout <<  "FiatShamirProtocol test ERROR\n" ;
+            return false;
         }
     }
     
-    if(!result) //if not verified, fail
-    {
-        std::cout <<  "FiatShamirProtocol test ERROR\n";
-        return false;
-    }
-    
-    //test without key
-    iteration = 0;
-    
-    {
-        Verifier V1(pub, modulus);
-        BigInteger false_key = priv-(priv/3);
-        Proover P1(false_key, modulus, size, &gen);
-        
-        
-        while(iteration < test_precision && result)
-        {
-            com = P1.step1();
-            ran = V1.step1(com);
-            com = P1.step2(ran);
-            V1.step2(com);
-            result = V1.checkstate();
-            iteration++;
-        }
-    }
-    
-    if(result) //if verified, fail
-    {
-        std::cout <<  "FiatShamirProtocol test ERROR\n" ;
-        return false;
-    }
-    
+
     std::cout << "FiatShamirProtocol test OK\n";
     return true;
 }
 
-//version with full KeyGen parameters
-bool Test::CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Generator *generator, int threads, unsigned int prime_distance)
+bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision, Generator &gen)
 {
-    if(size < 64 || test_precision < 1)
+    if(size < 512 || testPrecision < 2)
     {
         std::cout <<  "FiatShamirProtocol test invalid input\n";
         return false;
     }
-    
-    int iteration;
-    bool ran;
-    BigInteger com;
-    iteration = 0;
-    bool result = true;
-    BigInteger priv, pub, modulus;
-    ParallelKeyGen(pub, priv, modulus, generator, size, threads, prime_precision, prime_distance);
-    
-    //test with key
+
+    auto priv = PrivateKey::keyGen(gen, size);
+    auto pub = priv.getPublicKey();
+    auto prover = priv.getProover(gen);
+    auto verifier = pub.getVerifier(gen);
+    BigInteger sn;
+
+    for(unsigned i = 0; i<testPrecision; i++)
     {
-        Verifier V(pub, modulus);
-        Proover P(priv, modulus, size, generator);
-        
-        while(iteration < test_precision && result)
+        sn = prover.step1();
+        bool choice = verifier.step1(sn);
+        sn = prover.step2(choice);
+        if(!verifier.step1(sn))
         {
-            com = P.step1();
-            ran = V.step1(com);
-            com = P.step2(ran);
-            V.step2(com);
-            result = V.checkstate();
-            iteration++;
+            std::cout <<  "FiatShamirProtocol test ERROR\n" ;
+            return false;
         }
     }
-    
-    if(!result) //if not verified, fail
+
+    auto fakeKey = PrivateKey::keyGen(gen, size);
+    if(fakeKey == priv)
     {
-        std::cout <<  "FiatShamirProtocol test ERROR\n";
-        return false;
-    }
-    
-    //test without key
-    iteration = 0;
-    
-    {
-        Verifier V1(pub, modulus);
-        BigInteger false_key = priv-(priv/3);
-        Proover P1(false_key, modulus, size, generator);
-        
-        
-        while(iteration < test_precision && result)
+        auto fakeProover = fakeKey.getProover(gen);
+        sn = fakeProover.step1();
+        bool choice = verifier.step1(sn);
+        sn = fakeProover.step2(choice);
+        if(verifier.step1(sn))
         {
-            com = P1.step1();
-            ran = V1.step1(com);
-            com = P1.step2(ran);
-            V1.step2(com);
-            result = V1.checkstate();
-            iteration++;
+            std::cout <<  "FiatShamirProtocol test ERROR\n" ;
+            return false;
         }
     }
-    
-    if(result) //if verified, fail
-    {
-        std::cout <<  "FiatShamirProtocol test ERROR\n" ;
-        return false;
-    }
-    
+
     std::cout << "FiatShamirProtocol test OK\n";
     return true;
 }

@@ -17,24 +17,37 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.4.1
+//version V.5.0
 
 
 
 #pragma once
-#include <stdio.h>
-#include <stdint.h>
-#include "Utils.h"
+
+#include "FiatShamirProtocol.hpp"
+#include <random>
 
 namespace FiatShamirProtocol
 {
-    namespace Test
+    class TestGenerator: public Generator
     {
-        //size: number of bit of the key
-        //test_precision: number of iteration, error probability = 1/2^precision
-        bool DefaultTest(unsigned int size = 1024, unsigned int test_precision = 20);
-        
-        //version with full KeyGen parameters
-        bool CustomTest(unsigned int size, unsigned int test_precision, unsigned int prime_precision,  Utils::Generator *generator, int threads = 1, unsigned int prime_distance = UINT32_MAX);
-    }
+    private:
+        gmp_randstate_t rstate;
+        mpz_t rand;
+        unsigned long long seed;
+        std::random_device rd;
+    public:
+        TestGenerator();
+
+        explicit TestGenerator(unsigned long long seed);
+        ~TestGenerator();
+        BigInteger getBig(unsigned int size) override;
+
+        bool getBit() override;
+    };
+
+    //size: number of bit of the key
+    //testPrecision: number of iteration, error probability = 1/2^precision
+    bool test(unsigned int size = 1024, unsigned int testPrecision = 20);
+
+    bool test(unsigned int size, unsigned int testPrecision, Generator &gen);
 }

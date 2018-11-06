@@ -27,7 +27,7 @@ using namespace FiatShamirProtocol;
 int main()
 {
     
-    test(4096);
+    test();
     return 0;
 }
 

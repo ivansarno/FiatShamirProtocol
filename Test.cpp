@@ -65,7 +65,7 @@ bool TestGenerator::getBit()
 
 bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
 {
-    if(size < 512 || testPrecision < 2)
+    if(size < 1024 || testPrecision < 2)
     {
         std::cout <<  "FiatShamirProtocol test invalid input\n";
         return false;
@@ -74,14 +74,14 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
     auto gen = TestGenerator();
     auto priv = PrivateKey::keyGen(gen, size);
     auto pub = priv.getPublicKey();
-    auto prover = priv.getProover(gen);
+    auto proover = priv.getProover(gen);
     auto verifier = pub.getVerifier(gen);
-    BigInteger sn = 0;
-    for(unsigned i = 0; i<testPrecision; i++)
+
+    for(int i = 0; i<testPrecision; i++)
     {
-        sn = prover.step1();
+        BigInteger sn = proover.step1();
         bool choice = verifier.step1(sn);
-        sn = prover.step2(choice);
+        sn = proover.step2(choice);
         if(!verifier.step2(sn))
         {
             std::cout <<  "FiatShamirProtocol test ERROR\n" ;
@@ -93,7 +93,7 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
     if(fakeKey == priv)
     {
         auto fakeProover = fakeKey.getProover(gen);
-        sn = fakeProover.step1();
+        BigInteger sn = fakeProover.step1();
         bool choice = verifier.step1(sn);
         sn = fakeProover.step2(choice);
         if(verifier.step1(sn))
@@ -110,7 +110,7 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
 
 bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision, Generator &gen)
 {
-    if(size < 512 || testPrecision < 2)
+    if(size < 1024 || testPrecision < 2)
     {
         std::cout <<  "FiatShamirProtocol test invalid input\n";
         return false;
@@ -118,15 +118,14 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision, Gen
 
     auto priv = PrivateKey::keyGen(gen, size);
     auto pub = priv.getPublicKey();
-    auto prover = priv.getProover(gen);
+    auto proover = priv.getProover(gen);
     auto verifier = pub.getVerifier(gen);
-    BigInteger sn;
 
-    for(unsigned i = 0; i<testPrecision; i++)
+    for(int i = 0; i<20; i++)
     {
-        sn = prover.step1();
+        BigInteger sn = proover.step1();
         bool choice = verifier.step1(sn);
-        sn = prover.step2(choice);
+        sn = proover.step2(choice);
         if(!verifier.step1(sn))
         {
             std::cout <<  "FiatShamirProtocol test ERROR\n" ;
@@ -138,7 +137,7 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision, Gen
     if(fakeKey == priv)
     {
         auto fakeProover = fakeKey.getProover(gen);
-        sn = fakeProover.step1();
+        BigInteger sn = fakeProover.step1();
         bool choice = verifier.step1(sn);
         sn = fakeProover.step2(choice);
         if(verifier.step1(sn))

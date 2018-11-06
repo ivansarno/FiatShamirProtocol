@@ -37,8 +37,7 @@ namespace FiatShamirProtocol
         std::random_device rd;
     public:
         TestGenerator();
-
-        explicit TestGenerator(unsigned long long seed);
+        TestGenerator(unsigned long long seed);
         ~TestGenerator();
         BigInteger getBig(unsigned int size) override;
 
@@ -49,5 +48,6 @@ namespace FiatShamirProtocol
     //testPrecision: number of iteration, error probability = 1/2^precision
     bool test(unsigned int size = 1024, unsigned int testPrecision = 20);
 
+    //version with full KeyGen parameters
     bool test(unsigned int size, unsigned int testPrecision, Generator &gen);
 }

@@ -47,8 +47,7 @@ namespace FiatShamirProtocol
         const unsigned size;
         bool synch;
 
-        //generator = random number generator, use an your own implementation of the abstract
-        // class Generator or my TestGenerator only for test
+        //generator = random number generator, use an your own implementation of the abstract class Generator or my TestGenerator only for test
         Proover(const BigInteger &privkey, const BigInteger &modulus, Generator &generator);
 
     public:
@@ -79,7 +78,7 @@ namespace FiatShamirProtocol
         //take result of Proover step1 and return a random choice to send to Proover
         bool step1(BigInteger &sessionNumber);
         
-        //take result of Proover step2, change the state of identification and return this
+        //take retult of Proover step2, change the state of identification and return this
         bool step2(BigInteger proof);
         
         //return state of identification
@@ -90,8 +89,8 @@ namespace FiatShamirProtocol
 
     class PublicKey
     {
-        const BigInteger key;
-        const BigInteger modulus;
+        
+        
 
         PublicKey(const BigInteger &key, const BigInteger &modulus);
 
@@ -103,26 +102,20 @@ namespace FiatShamirProtocol
 
         bool operator==(const PublicKey &rhs) const;
         bool operator!=(const PublicKey &rhs) const;
-
-
+const BigInteger key;
+const BigInteger modulus;
         friend PrivateKey;
     };
 
     class PrivateKey
     {
-        const BigInteger key;
-        const BigInteger modulus;
+                const BigInteger modulus;
 
         PrivateKey(const BigInteger &key, const BigInteger &modulus);
 
     public:
         //size = number of bit of the keys
-        //generator = random number generator, use an your own implementation
-        // of the abstract class Generator or my TestGenerator only for test
         static PrivateKey keyGen(Generator &generator, unsigned size);
-        //size = number of bit of the keys
-        //generator = random number generator, use an your own implementation
-        // of the abstract class Generator or my TestGenerator only for test
         static std::optional<PrivateKey> keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size);
         Proover getProover(Generator &generator)const;
         PublicKey getPublicKey();
@@ -131,6 +124,7 @@ namespace FiatShamirProtocol
 
         bool operator==(const PrivateKey &rhs) const;
         bool operator!=(const PrivateKey &rhs) const;
+        const BigInteger key;
 
         friend PublicKey;
     };

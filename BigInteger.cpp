@@ -25,7 +25,7 @@
 using namespace BigInt;
 using namespace std;
 
-BigInteger BigInt::pow(const BigInteger &base, unsigned long exp)
+BigInteger BigInt::pow(const BigInteger &base, uint64_t exp)
 {
     
     BigInteger result = BigInteger();
@@ -49,9 +49,10 @@ BigInteger BigInt::inverse(const BigInteger &number, const BigInteger &mod)
     return result;
     
 }
-bool BigInt::isPrime(const BigInteger &number)
+
+bool BigInt::isPrime(const BigInteger &number, unsigned iterations)
 {
-   return 0 != mpz_probab_prime_p(number.get_mpz_t(), 20);
+    return 0 != mpz_probab_prime_p(number.get_mpz_t(), iterations);
 }
 BigInteger BigInt::nextPrime(const BigInteger &number)
 {
@@ -91,7 +92,7 @@ void BigInt::bigIntegerToBytes(const BigInteger &number, Buffer &data)
     data.resize(data.size() + size + 1, 0);
     data[index] = (uint8_t) size;
     index++;
-    mpz_export(data.data()+index, nullptr, 1, sizeof(uint8_t), 1, 0, number.get_mpz_t());
+    mpz_export(data.data()+index, NULL, 1, sizeof(uint8_t), 1, 0, number.get_mpz_t());
 }
 bool BigInt::isOdd(const BigInteger &number)
 {

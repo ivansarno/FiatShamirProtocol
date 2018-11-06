@@ -31,11 +31,11 @@ namespace BigInt
 {
     typedef mpz_class BigInteger;
     typedef std::vector<uint8_t> Buffer;
-    BigInteger pow(const BigInteger &base, unsigned long exp);
+    BigInteger pow(const BigInteger &base, uint64_t exp);
     BigInteger modPow(const BigInteger &base, const BigInteger &exp, const BigInteger &mod);
     bool coprime (const BigInteger &a, const BigInteger &b);
     BigInteger inverse(const BigInteger &number, const BigInteger &mod);
-    bool isPrime(const BigInteger &number);
+    bool isPrime(const BigInteger &number, unsigned iterations = 20);
     BigInteger nextPrime(const BigInteger &number);
     //retuns -1 for error
     BigInteger bigIntegerFromBytes(const Buffer &data);

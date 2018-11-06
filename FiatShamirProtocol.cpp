@@ -23,12 +23,22 @@
 
 using namespace FiatShamirProtocol;
 
+static bool keyCheck(const BigInteger &number, unsigned size)
+{
+    return number > 2;
+}
+
+static bool sessionNumberCheck(const BigInteger &number, unsigned size)
+{
+    return number > 2;
+}
+
 BigInteger Proover::step1()
 {
     sessionNumber = mod(generator.getBig(size), modulus);
     synch = true;
     
-    while(bitSize(sessionNumber) < size/8)//avoid communication of the key
+    while(!sessionNumberCheck(sessionNumber, size))//avoid comunication of the key
         sessionNumber = mod(generator.getBig(size), modulus);
     
     return mod(sessionNumber * sessionNumber, modulus);
@@ -45,7 +55,7 @@ BigInteger Proover::step2(bool choice)
 }
 
 Proover::Proover(const BigInteger &privkey, const BigInteger &modulus, Generator &generator): key(privkey), modulus(modulus),
-    generator(generator), size(bitSize(modulus)) {}
+    size(bitSize(modulus)), generator(generator) {}
 
 bool Verifier::step1(BigInteger &sessionNumber) //take result of Proover step1
 {
@@ -137,29 +147,29 @@ std::optional<PrivateKey> PrivateKey::fromBytes(const Buffer &data)
 
 std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size)
 {
-    auto secretSize = bitSize(secretNumber);
-    if(size < 512 || size < secretSize || secretSize < size/4)
+    if(size < 1024 || !keyCheck(secretNumber, size))
         return std::optional<PrivateKey>();
 
-
-    BigInteger primeP = generator.getBig(size/2);
-    while(bitSize(primeP) < size/4)
-        primeP = generator.getBig(size/2);
-    BigInteger primeQ = generator.getBig(size/2);
-    while(bitSize(primeQ) < size/4)
-        primeQ = generator.getBig(size/2);
-    primeQ = nextPrime(primeQ);
-    primeP = nextPrime(primeP);
-
-
-    while(bitSize(abs(primeP-primeQ)) < 32)
+    unsigned primeSize = size/2;
+    BigInteger temp = 0;
+    do
     {
-        while(bitSize(primeQ) < size/4)
-            primeQ = generator.getBig(size/2);
-        primeQ = nextPrime(primeQ);
-    }
-
-
+        temp = generator.getBig(primeSize);
+        while(bitSize(temp) < primeSize-2)
+            temp = generator.getBig(primeSize);
+        temp = nextPrime(temp);
+    }while(!isPrime(temp, 40));
+    BigInteger primeP = temp;
+    temp = 0;
+    do
+    {
+        temp = generator.getBig(primeSize);
+        while(bitSize(temp) < primeSize-2)
+            temp = generator.getBig(primeSize);
+        temp = nextPrime(temp);
+    }while(!isPrime(temp, 40) || bitSize(abs(primeP-temp)) < 32);
+    BigInteger primeQ = temp;
+    
     BigInteger modulus = primeP * primeQ;
 
     return PrivateKey(secretNumber, modulus);
@@ -167,23 +177,32 @@ std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Gen
 
 PrivateKey PrivateKey::keyGen(Generator &generator, unsigned size)
 {
-    if(size < 512)
-        size = 512;
+    if(size < 1024)
+        size = 1024;
 
-
-    BigInteger primeP = generator.getBig(size/2);
-    while(bitSize(primeP) < size/4)
-        primeP = generator.getBig(size/2);
-    BigInteger primeQ = generator.getBig(size/2);
-    while(bitSize(primeQ) < size/4)
-        primeQ = generator.getBig(size/2);
-    primeQ = nextPrime(primeQ);
-    primeP = nextPrime(primeP);
-
-
+    unsigned primeSize = size/2;
+    BigInteger temp = 0;
+    do
+    {
+        temp = generator.getBig(primeSize);
+        while(bitSize(temp) < primeSize-2)
+            temp = generator.getBig(primeSize);
+        temp = nextPrime(temp);
+    }while(!isPrime(temp, 40));
+    BigInteger primeP = temp;
+    temp = 0;
+    do
+    {
+        temp = generator.getBig(primeSize);
+        while(bitSize(temp) < primeSize-2)
+            temp = generator.getBig(primeSize);
+        temp = nextPrime(temp);
+    }while(!isPrime(temp, 40) || bitSize(abs(primeP-temp)) < 32);
+    BigInteger primeQ = temp;
+    
     BigInteger modulus = primeP * primeQ;
     BigInteger key = mod(generator.getBig(size), modulus);
-    while(bitSize(key) < size/4)
+    while(!keyCheck(key, size))
         key = mod(generator.getBig(size), modulus);
     return PrivateKey(key, modulus);
 }

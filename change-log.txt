@@ -1,7 +1,12 @@
+Version 5.0.1
+
+1) Better BigInteger interface
+2) New security checks
+
 Version 5.0
 AAA Version not backward compatible
 
-1)Total Redesign
+1) Total Redesign
 2) Makefile
 
 Version 4.1

@@ -18,11 +18,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.5.0
+//version V.5.0.1
 
-#ifndef BigInteger_hpp
-#define BigInteger_hpp
-
+#pragma once
 #include <cstdint>
 #include <vector>
 #include <gmpxx.h>
@@ -33,8 +31,11 @@ namespace BigInt
     typedef std::vector<uint8_t> Buffer;
     BigInteger pow(const BigInteger &base, uint64_t exp);
     BigInteger modPow(const BigInteger &base, const BigInteger &exp, const BigInteger &mod);
+    BigInteger&& pow(BigInteger &&base, uint64_t exp);
+    BigInteger&& modPow(BigInteger &&base, const BigInteger &exp, const BigInteger &mod);
     bool coprime (const BigInteger &a, const BigInteger &b);
     BigInteger inverse(const BigInteger &number, const BigInteger &mod);
+    BigInteger&& inverse(BigInteger &&number, const BigInteger &mod);
     bool isPrime(const BigInteger &number, unsigned iterations = 20);
     BigInteger nextPrime(const BigInteger &number);
     //retuns -1 for error
@@ -50,13 +51,22 @@ namespace BigInt
     bool isZero(const BigInteger &number);
     unsigned bit(const BigInteger &number, size_t index);
     BigInteger mod(const BigInteger &number, const BigInteger &modulus);
+    BigInteger&& mod(BigInteger &&number, const BigInteger &modulus);
+    BigInteger negMod(const BigInteger &number, const BigInteger &modulus);
+    BigInteger&& negMod(BigInteger &&number, const BigInteger &modulus);
     BigInteger u64ToBigInteger(uint64_t integer);
     uint64_t bigIntegerToU64(const BigInteger &big);
     unsigned bitSize(const BigInteger &number);
     
     BigInteger powModSec(const BigInteger &base, const BigInteger &exp, const BigInteger &mod);
     
+    void integersToBytes(const std::vector<BigInteger> &integers, Buffer &data, unsigned intSize=0);
+    Buffer integersToBytes(const std::vector<BigInteger> &integers, unsigned intSize=0);
+    //returns an empty vector for error or if data is empty
+    std::vector<BigInteger> integersFromBytes(const Buffer &data, size_t &index);
+    //returns an empty vector for error or if data is empty
+    std::vector<BigInteger> integersFromBytes(const Buffer &data);
+    
+    void erase(BigInteger &secret);
 }
-
-#endif /* BigInteger_hpp */
 

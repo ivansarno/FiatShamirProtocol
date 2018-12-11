@@ -17,20 +17,21 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.5.0
+//version V.5.0.1
 
 #include "FiatShamirProtocol.hpp"
 
 using namespace FiatShamirProtocol;
 
-static bool keyCheck(const BigInteger &number, unsigned size)
+static bool keyCheck(const BigInteger &number, const BigInteger &modulus)
 {
-    return number > 2;
+    BigInteger square = mod(number*number, modulus);
+    return number > 2 && coprime(number, modulus) && coprime(square, modulus) && mpz_perfect_square_p(square.get_mpz_t()) == 0;
 }
 
-static bool sessionNumberCheck(const BigInteger &number, unsigned size)
+static bool sessionNumberCheck(const BigInteger &number, const BigInteger &square, const BigInteger &modulus)
 {
-    return number > 2;
+    return number > 2 && coprime(number, modulus) && coprime(square, modulus) && mpz_perfect_square_p(square.get_mpz_t()) == 0;
 }
 
 BigInteger Proover::step1()
@@ -38,10 +39,11 @@ BigInteger Proover::step1()
     sessionNumber = mod(generator.getBig(size), modulus);
     synch = true;
     
-    while(!sessionNumberCheck(sessionNumber, size))//avoid comunication of the key
+    BigInteger square = mod(sessionNumber * sessionNumber, modulus);
+    while(!sessionNumberCheck(sessionNumber, square, modulus))//avoid comunication of the key
         sessionNumber = mod(generator.getBig(size), modulus);
     
-    return mod(sessionNumber * sessionNumber, modulus);
+    return square;
 }
 
 
@@ -147,9 +149,9 @@ std::optional<PrivateKey> PrivateKey::fromBytes(const Buffer &data)
 
 std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size)
 {
-    if(size < 1024 || !keyCheck(secretNumber, size))
+    if(size < 2)
         return std::optional<PrivateKey>();
-
+    
     unsigned primeSize = size/2;
     BigInteger temp = 0;
     do
@@ -171,7 +173,9 @@ std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Gen
     BigInteger primeQ = temp;
     
     BigInteger modulus = primeP * primeQ;
-
+    
+    if(!keyCheck(secretNumber, modulus))
+        return std::optional<PrivateKey>();
     return PrivateKey(secretNumber, modulus);
 }
 
@@ -202,7 +206,7 @@ PrivateKey PrivateKey::keyGen(Generator &generator, unsigned size)
     
     BigInteger modulus = primeP * primeQ;
     BigInteger key = mod(generator.getBig(size), modulus);
-    while(!keyCheck(key, size))
+    while(!keyCheck(key, modulus))
         key = mod(generator.getBig(size), modulus);
     return PrivateKey(key, modulus);
 }

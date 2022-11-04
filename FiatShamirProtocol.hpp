@@ -17,7 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.5.0.1
+//version V.5.1
 
 #pragma once
 #include <optional>
@@ -90,8 +90,6 @@ namespace FiatShamirProtocol
     class PublicKey
     {
         
-        
-
         PublicKey(const BigInteger &key, const BigInteger &modulus);
 
     public:
@@ -102,14 +100,14 @@ namespace FiatShamirProtocol
 
         bool operator==(const PublicKey &rhs) const;
         bool operator!=(const PublicKey &rhs) const;
-const BigInteger key;
-const BigInteger modulus;
+        const BigInteger key;
+        const BigInteger modulus;
         friend PrivateKey;
     };
 
     class PrivateKey
     {
-                const BigInteger modulus;
+        const BigInteger modulus;
 
         PrivateKey(const BigInteger &key, const BigInteger &modulus);
 

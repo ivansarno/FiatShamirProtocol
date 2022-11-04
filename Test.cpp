@@ -17,7 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.5.0.1
+//version V.5.1
 
 
 #include "Test.hpp"
@@ -77,7 +77,7 @@ bool FiatShamirProtocol::test(unsigned int size, unsigned int testPrecision)
     auto proover = priv.getProover(gen);
     auto verifier = pub.getVerifier(gen);
 
-    for(int i = 0; i<testPrecision; i++)
+    for(unsigned i = 0; i<testPrecision; i++)
     {
         BigInteger sn = proover.step1();
         bool choice = verifier.step1(sn);

@@ -17,11 +17,14 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-//version V.5.0.1
+//version V.5.1
 
 #include "FiatShamirProtocol.hpp"
 
 using namespace FiatShamirProtocol;
+
+const unsigned PRIME_PRECISION = 40;
+const unsigned MAX_BIT_LOSS = 2;
 
 static bool keyCheck(const BigInteger &number, const BigInteger &modulus)
 {
@@ -57,7 +60,7 @@ BigInteger Proover::step2(bool choice)
 }
 
 Proover::Proover(const BigInteger &privkey, const BigInteger &modulus, Generator &generator): key(privkey), modulus(modulus),
-    size(bitSize(modulus)), generator(generator) {}
+    generator(generator), size(bitSize(modulus)) {}
 
 bool Verifier::step1(BigInteger &sessionNumber) //take result of Proover step1
 {
@@ -103,7 +106,7 @@ Verifier::Verifier(const BigInteger &pubkey, const BigInteger &modulus, Generato
 generator(generator) {}
 
 
-PrivateKey::PrivateKey(const BigInteger &key, const BigInteger &modulus) : key(key), modulus(modulus) {}
+PrivateKey::PrivateKey(const BigInteger &key, const BigInteger &modulus) : modulus(modulus), key(key) {}
 
 bool PrivateKey::operator==(const PrivateKey &rhs) const
 {
@@ -147,68 +150,49 @@ std::optional<PrivateKey> PrivateKey::fromBytes(const Buffer &data)
     return PrivateKey(key, modulus);
 }
 
-std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size)
+static BigInteger modGen(Generator &generator, unsigned size)
 {
-    if(size < 2)
-        return std::optional<PrivateKey>();
-    
+    size = std::min<unsigned>(1024, size);
+
     unsigned primeSize = size/2;
     BigInteger temp = 0;
     do
     {
         temp = generator.getBig(primeSize);
-        while(bitSize(temp) < primeSize-2)
+        while(bitSize(temp) < primeSize-MAX_BIT_LOSS)
             temp = generator.getBig(primeSize);
         temp = nextPrime(temp);
-    }while(!isPrime(temp, 40));
+    }while(!isPrime(temp, PRIME_PRECISION));
     BigInteger primeP = temp;
     temp = 0;
     do
     {
         temp = generator.getBig(primeSize);
-        while(bitSize(temp) < primeSize-2)
+        while(bitSize(temp) < primeSize-MAX_BIT_LOSS)
             temp = generator.getBig(primeSize);
         temp = nextPrime(temp);
-    }while(!isPrime(temp, 40) || bitSize(abs(primeP-temp)) < 32);
+    }while(!isPrime(temp, PRIME_PRECISION) || bitSize(abs(primeP-temp)) < primeSize/2);
     BigInteger primeQ = temp;
     
-    BigInteger modulus = primeP * primeQ;
-    
-    if(!keyCheck(secretNumber, modulus))
-        return std::optional<PrivateKey>();
-    return PrivateKey(secretNumber, modulus);
+    return primeP * primeQ;
 }
 
 PrivateKey PrivateKey::keyGen(Generator &generator, unsigned size)
 {
-    if(size < 1024)
-        size = 1024;
-
-    unsigned primeSize = size/2;
-    BigInteger temp = 0;
-    do
-    {
-        temp = generator.getBig(primeSize);
-        while(bitSize(temp) < primeSize-2)
-            temp = generator.getBig(primeSize);
-        temp = nextPrime(temp);
-    }while(!isPrime(temp, 40));
-    BigInteger primeP = temp;
-    temp = 0;
-    do
-    {
-        temp = generator.getBig(primeSize);
-        while(bitSize(temp) < primeSize-2)
-            temp = generator.getBig(primeSize);
-        temp = nextPrime(temp);
-    }while(!isPrime(temp, 40) || bitSize(abs(primeP-temp)) < 32);
-    BigInteger primeQ = temp;
-    
-    BigInteger modulus = primeP * primeQ;
+    BigInteger modulus = modGen(generator, size);
     BigInteger key = mod(generator.getBig(size), modulus);
     while(!keyCheck(key, modulus))
         key = mod(generator.getBig(size), modulus);
     return PrivateKey(key, modulus);
+}
+
+std::optional<PrivateKey> PrivateKey::keyGen(const BigInteger &secretNumber, Generator &generator, unsigned size)
+{
+    BigInteger modulus = modGen(generator, size);
+    
+    if(!keyCheck(secretNumber, modulus))
+        return std::optional<PrivateKey>();
+    return PrivateKey(secretNumber, modulus);
 }
 
 PublicKey::PublicKey(const BigInteger &key, const BigInteger &modulus) : key(key), modulus(modulus) {}

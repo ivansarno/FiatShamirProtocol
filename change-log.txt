@@ -1,5 +1,9 @@
 Version 5.0.1
 
+1) Better security checks
+
+Version 5.0.1
+
 1) Better BigInteger interface
 2) New security checks
 
